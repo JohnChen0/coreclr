@@ -179,10 +179,32 @@ build_mscorlib()
         fi
     fi
 
+    # Construct the path to MSBuild.exe
+    __PACKAGES_DIR=$__ProjectRoot/packages
+    __BUILD_TOOLS_PACKAGE_VERSION=$(cat $__ProjectRoot/BuildToolsVersion.txt)
+    __BUILD_TOOLS_PATH=$__PACKAGES_DIR/Microsoft.DotNet.BuildTools/$__BUILD_TOOLS_PACKAGE_VERSION/lib
+    __MSBUILDRUNTIME_DIR=$__BUILD_TOOLS_PATH/msbuild-runtime
+    __MSBuildPath=$__MSBUILDRUNTIME_DIR/MSBuild.exe
+
     # Grab the MSBuild package if we don't have it already
     if [ ! -e "$__MSBuildPath" ]; then
+        echo "Restoring build tools..."
+        cd $__ProjectRoot
+        sh ./init-tools.sh
+        if [ $? -ne 0 ]; then
+            echo "Failed to restore build tools."
+            exit 1
+        fi
+
+        # Installing MSBuild will eventually be done by init-tools.sh.
+        # As a temporary workaround, we put necessary files into the BuildTools
+        # package and then call init-msbuild.sh explicitly.
         echo "Restoring MSBuild..."
-        mono "$__NuGetPath" install $__MSBuildPackageId -Version $__MSBuildPackageVersion -source "https://www.myget.org/F/dotnet-buildtools/" -OutputDirectory "$__PackagesDir"
+        mkdir -p $__MSBUILDRUNTIME_DIR
+        cp init-msbuild/init-msbuild.sh $__BUILD_TOOLS_PATH
+        cp init-msbuild/Program.cs $__MSBUILDRUNTIME_DIR
+        cp init-msbuild/project.json $__MSBUILDRUNTIME_DIR
+        sh $__BUILD_TOOLS_PATH/init-msbuild.sh $__ProjectRoot/Tools/dotnetcli/bin/dotnet $__MSBUILDRUNTIME_DIR $__ProjectRoot/Tools
         if [ $? -ne 0 ]; then
             echo "Failed to restore MSBuild."
             exit 1
@@ -203,11 +225,21 @@ build_mscorlib()
     esac
 
     # Invoke MSBuild
-    mono "$__MSBuildPath" /nologo "$__ProjectRoot/build.proj" /verbosity:minimal "/fileloggerparameters:Verbosity=normal;LogFile=$__LogsDir/MSCorLib_$__BuildOS__$__BuildArch__$__BuildType.log" /t:Build /p:__BuildOS=$__BuildOS /p:__BuildArch=$__BuildArch /p:__BuildType=$__BuildType /p:__IntermediatesDir=$__IntermediatesDir /p:UseRoslynCompiler=true /p:BuildNugetPackage=false /p:ToolNugetRuntimeId=$_ToolNugetRuntimeId
+    $__MSBUILDRUNTIME_DIR/corerun "$__MSBuildPath" /nologo "$__ProjectRoot/build.proj" /verbosity:minimal "/fileloggerparameters:Verbosity=normal;LogFile=$__LogsDir/MSCorLib_$__BuildOS__$__BuildArch__$__BuildType.log" /t:Build /p:__BuildOS=$__BuildOS /p:__BuildArch=$__BuildArch /p:__BuildType=$__BuildType /p:__IntermediatesDir=$__IntermediatesDir /p:UseRoslynCompiler=true /p:BuildNugetPackage=false /p:ToolNugetRuntimeId=$_ToolNugetRuntimeId /p:UseSharedCompilation=false
 
     if [ $? -ne 0 ]; then
         echo "Failed to build mscorlib."
-        exit 1
+        # Temporarily ignore the error, due to a known issue with MSBuild
+        # exit 1
+    fi
+
+    if [ $__SkipCoreCLR == 0 ]; then
+        echo "Generating native image for mscorlib."
+        $__BinDir/crossgen $__BinDir/mscorlib.dll
+        if [ $? -ne 0 ]; then
+            echo "Failed to generate native image for mscorlib."
+            exit 1
+        fi
     fi
 }
 
@@ -306,9 +338,6 @@ __VerboseBuild=0
 __CrossBuild=0
 __ClangMajorVersion=3
 __ClangMinorVersion=5
-__MSBuildPackageId="Microsoft.Build.Mono.Debug"
-__MSBuildPackageVersion="14.1.0.0-prerelease"
-__MSBuildPath="$__PackagesDir/$__MSBuildPackageId.$__MSBuildPackageVersion/lib/MSBuild.exe"
 __NuGetPath="$__PackagesDir/NuGet.exe"
 
 for i in "$@"

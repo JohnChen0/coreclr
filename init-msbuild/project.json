@@ -1,0 +1,31 @@
+{
+  "name": "buildtoolsbootstrapper",
+  "version": "1.0.0-*",
+  "compilationOptions": {
+    "emitEntryPoint": true
+  },
+  "dependencies": {
+    "Microsoft.NETCore.Platforms": "1.0.1-beta-23516",
+    "Microsoft.Build.Framework": "0.1.0-preview-00006",
+    "Microsoft.Build.Tasks.Core": "0.1.0-preview-00006",
+    "Microsoft.Build.Utilities.Core": "0.1.0-preview-00006"
+  },
+  "frameworks": {
+    "dnxcore50": {
+      "dependencies": {
+        "Microsoft.NETCore.TestHost": "1.0.0-beta-23516",
+        "Microsoft.NETCore.Runtime": "1.0.1-beta-23516",
+        "MSBuild": "0.1.0-preview-00006",
+        "Microsoft.Build.Targets": "0.1.0-preview-00006",
+        "Microsoft.Build": "0.1.0-preview-00006",
+        "Microsoft.Net.Compilers.NetCore": "1.2.0-beta1-20160108-01",
+        "Microsoft.Net.Compilers.Targets.NetCore": "0.1.5-dev"
+      }
+    },
+    "net46": {}
+  },
+  "runtimes": {
+    "win7-x64": {},
+    "ubuntu.14.04-x64": {}
+  }
+}
