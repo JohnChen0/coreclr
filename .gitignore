@@ -2,6 +2,10 @@ syntax: glob
 
 [Bb]inaries/
 
+# Build tools related files
+[Tt]ools/
+msbuild-runtime/project.lock.json
+
 ### VisualStudio ###
 
 # User-specific files
