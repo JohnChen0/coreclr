@@ -51,8 +51,3 @@ if [ ! -e $__PROJECT_JSON_FILE ]; then
 
  sh $__BUILD_TOOLS_PATH/init-tools.sh $__scriptpath $__DOTNET_CMD $__TOOLRUNTIME_DIR
 fi
-
-cd $__scriptpath/msbuild-runtime
-$__DOTNET_CMD restore --source $__scriptpath/msbuild-runtime/NuGet/ --source https://www.myget.org/F/dotnet-core/ --source $__BUILDTOOLS_SOURCE --source https://www.nuget.org/api/v2/
-$__DOTNET_CMD publish -f dnxcore50 -o $__TOOLRUNTIME_DIR
-cd $__scriptpath

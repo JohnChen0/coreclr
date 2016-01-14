@@ -4,7 +4,7 @@ syntax: glob
 
 # Build tools related files
 [Tt]ools/
-msbuild-runtime/project.lock.json
+init-msbuild/project.lock.json
 
 ### VisualStudio ###
 

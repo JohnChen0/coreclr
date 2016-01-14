@@ -175,8 +175,15 @@ build_mscorlib()
 
     # Grab the MSBuild package if we don't have it already
     if [ ! -e "$__MSBuildPath" ]; then
-        echo "Restoring MSBuild..."
+        echo "Restoring build tools..."
+        cd $__ProjectRoot
         sh ./init-tools.sh
+        if [ $? -ne 0 ]; then
+            echo "Failed to restore build tools."
+            exit 1
+        fi
+        echo "Restoring MSBuild..."
+        sh init-msbuild/init-msbuild.sh $__ProjectRoot/Tools/dotnetcli/bin/dotnet $__ProjectRoot/Tools
         if [ $? -ne 0 ]; then
             echo "Failed to restore MSBuild."
             exit 1
