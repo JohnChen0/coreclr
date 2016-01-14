@@ -211,6 +211,15 @@ build_mscorlib()
         # Temporarily ignore the error, due to a known issue with MSBuild
         # exit 1
     fi
+
+    if [ $__SkipCoreCLR == 0 ]; then
+        echo "Generating native image for mscorlib."
+        $__BinDir/crossgen $__BinDir/mscorlib.dll
+        if [ $? -ne 0 ]; then
+            echo "Failed to generate native image for mscorlib."
+            exit 1
+        fi
+    fi
 }
 
 echo "Commencing CoreCLR Repo build"
