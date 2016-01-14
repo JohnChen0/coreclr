@@ -7,7 +7,7 @@ __TOOLS_DIR=$2
 __BUILDERRORLEVEL=0
 
 if [ ! -e "$__DOTNET_CMD" ]; then
-   echo "ERROR: Cannot find dotnet.exe at path '$__DOTNET_CMD'. Please pass in the path to dotnet.exe as the 1st parameter."
+   echo "ERROR: Cannot find dotnet at path '$__DOTNET_CMD'. Please pass in the path to dotnet as the 1st parameter."
    exit 1
 fi
 
