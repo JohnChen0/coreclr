@@ -229,8 +229,7 @@ build_mscorlib()
 
     if [ $? -ne 0 ]; then
         echo "Failed to build mscorlib."
-        # Temporarily ignore the error, due to a known issue with MSBuild
-        # exit 1
+        exit 1
     fi
 
     if [ $__SkipCoreCLR == 0 ]; then
