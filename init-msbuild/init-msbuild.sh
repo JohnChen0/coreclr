@@ -37,7 +37,7 @@ fi
 
 # Restoring most of the runtime
 cd "$__BUILDTOOLS_PACKAGE_DIR/msbuild-runtime/"
-"$__DOTNET_CMD" restore "$__BUILDTOOLS_PACKAGE_DIR/msbuild-runtime/project.json" --source $__TOOLSDIR/../init-msbuild/NuGet/ --source https://www.myget.org/F/roslyn-nightly/ --source https://www.myget.org/F/dotnet-core/ --source https://www.myget.org/F/dotnet-buildtools/ --source https://www.nuget.org/api/v2/
+"$__DOTNET_CMD" restore "$__BUILDTOOLS_PACKAGE_DIR/msbuild-runtime/project.json" --source https://www.myget.org/F/roslyn-nightly/ --source https://www.myget.org/F/dotnet-core/ --source https://www.myget.org/F/dotnet-buildtools/ --source https://www.nuget.org/api/v2/
 "$__DOTNET_CMD" publish -f dnxcore50 -r ${__PUBLISH_RID} -o "$__MSBUILDRUNTIME_DIR"
 chmod a+x "$__MSBUILDRUNTIME_DIR/corerun"
 
