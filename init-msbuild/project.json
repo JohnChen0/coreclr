@@ -5,20 +5,20 @@
     "emitEntryPoint": true
   },
   "dependencies": {
-    "Microsoft.NETCore.Platforms": "1.0.1-beta-23516",
-    "Microsoft.Build.Framework": "0.1.0-preview-00006",
-    "Microsoft.Build.Tasks.Core": "0.1.0-preview-00006",
-    "Microsoft.Build.Utilities.Core": "0.1.0-preview-00006"
+    "Microsoft.NETCore.Platforms": "1.0.1-rc2-23712",
+    "Microsoft.Build.Framework": "0.1.0-preview-00015",
+    "Microsoft.Build.Tasks.Core": "0.1.0-preview-00015",
+    "Microsoft.Build.Utilities.Core": "0.1.0-preview-00015"
   },
   "frameworks": {
     "dnxcore50": {
       "dependencies": {
-        "Microsoft.NETCore.TestHost": "1.0.0-beta-23516",
-        "Microsoft.NETCore.Runtime": "1.0.1-beta-23516",
-        "MSBuild": "0.1.0-preview-00009",
-        "Microsoft.Build.Targets": "0.1.0-preview-00006",
-        "Microsoft.Build": "0.1.0-preview-00006",
-        "Microsoft.Net.Compilers.NetCore": "1.2.0-beta1-20160108-01",
+        "Microsoft.NETCore.TestHost": "1.0.0-rc2-23712",
+        "Microsoft.NETCore.Runtime": "1.0.1-rc2-23712",
+        "MSBuild": "0.1.0-preview-00015",
+        "Microsoft.Build.Targets": "0.1.0-preview-00015",
+        "Microsoft.Build": "0.1.0-preview-00015",
+        "Microsoft.Net.Compilers.NetCore": "1.2.0-beta1-20160122-02",
         "Microsoft.Net.Compilers.Targets.NetCore": "0.1.5-dev"
       }
     },
