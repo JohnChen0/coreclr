@@ -164,6 +164,16 @@ GetModuleFileNameWrapper(
     SString& buffer
     );
 
+inline DWORD
+GetModuleFileNameWrapper(
+    _In_opt_ HMODULE hModule,
+    _Out_writes_to_(nSize, ((return < nSize) ? (return +1) : nSize)) LPWSTR lpFilename,
+    _In_ DWORD nSize
+    )
+{
+    return GetModuleFileNameW(hModule, lpFilename, nSize);
+}
+
 DWORD WINAPI GetEnvironmentVariableWrapper(
     _In_opt_  LPCTSTR lpName,
     _Out_opt_ SString&  lpBuffer

@@ -406,7 +406,6 @@
 #define WszCreateFileMapping CreateFileMappingW
 #define WszOpenFileMapping OpenFileMappingW
 #define WszGetLogicalDriveStrings GetLogicalDriveStringsW
-#define WszGetModuleFileName GetModuleFileNameW
 #define WszGetModuleHandle GetModuleHandleW
 #define WszGetModuleHandleEx GetModuleHandleExW
 #define WszFatalAppExit FatalAppExitW
@@ -715,6 +714,8 @@
 #define WszCreateHardLink      CreateHardLinkWrapper
 #define WszCreateSymbolicLink  CreateSymbolicLinkWrapper
 #define WszGetBinaryType       GetBinaryTypeWrapper
+
+#define WszGetModuleFileName GetModuleFileNameWrapper
 
 //Can not use extended syntax 
 #define WszGetFullPathName     GetFullPathNameW
