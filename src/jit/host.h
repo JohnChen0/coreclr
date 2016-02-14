@@ -33,6 +33,32 @@ void gcDump_logf(const char* fmt, ...);
 
 void logf(unsigned level, const char* fmt, ...);
 
+#if defined(CROSSGEN_COMPILE) && !defined(PLATFORM_UNIX) && !defined(fprintf)
+#include <fcntl.h>
+#include <io.h>
+// On Windows, CrossGen configures its stdout to allow Unicode output only.
+// The following wrapper allows fprintf to work inside JIT for debugging purposes.
+inline int fprintfCrossgen(FILE *stream, const char *format, ...)
+{
+    // Flush existing Unicode output
+    printf("");
+
+    // Switch to normal text output mode, to allow ANSI strings
+    int prevMode = _setmode(_fileno(stdout), _O_TEXT);
+    va_list args;
+    va_start(args, format);
+    int ret = vfprintf(stream, format, args);
+    va_end(args);
+
+    // Flush ANSI output, before switching back to previous mode
+    printf("");
+    _setmode(_fileno(stdout), prevMode);
+
+    return ret;
+}
+#define fprintf fprintfCrossgen
+#endif
+
 extern  "C" 
 void    __cdecl     assertAbort(const char *why, const char *file, unsigned line);
 
