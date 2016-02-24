@@ -39,7 +39,7 @@
 *******************************************************************************/
 
 void MakePath (
-        __out_ecount (MAX_LONGPATH) WCHAR *path,
+        __out CQuickWSTR &szPath,
         __in LPCWSTR drive,
         __in LPCWSTR dir,
         __in LPCWSTR fname,
@@ -53,6 +53,13 @@ void MakePath (
             FORBID_FAULT;
         }
         CONTRACTL_END
+
+        SIZE_T maxCount = 4      // Possible separators between components, plus null terminator
+            + (drive != nullptr ? 2 : 0)
+            + (dir != nullptr ? wcslen(dir) : 0)
+            + (fname != nullptr ? wcslen(fname) : 0)
+            + (ext != nullptr ? wcslen(ext) : 0);
+        LPWSTR path = szPath.AllocNoThrow(maxCount);
 
         const WCHAR *p;
         DWORD count = 0;
@@ -91,11 +98,7 @@ void MakePath (
                         *path++ = *p++;
                         count++;
 
-                        if (count == MAX_LONGPATH) {
-                            --path;
-                            *path = _T('\0');
-                            return;
-                        }
+                        _ASSERTE(count < maxCount);
                 }
 
 #ifdef _MBCS
@@ -111,11 +114,7 @@ void MakePath (
                         *path++ = _T('\\');
                         count++;
 
-                        if (count == MAX_LONGPATH) {
-                            --path;
-                            *path = _T('\0');
-                            return;
-                        }
+                        _ASSERTE(count < maxCount);
                 }
         }
 
@@ -126,11 +125,7 @@ void MakePath (
                         *path++ = *p++;
                         count++;
 
-                        if (count == MAX_LONGPATH) {
-                            --path;
-                            *path = _T('\0');
-                            return;
-                        }
+                        _ASSERTE(count < maxCount);
                 }
         }
 
@@ -143,27 +138,21 @@ void MakePath (
                         *path++ = _T('.');
                         count++;
 
-                        if (count == MAX_LONGPATH) {
-                            --path;
-                            *path = _T('\0');
-                            return;
-                        }
+                        _ASSERTE(count < maxCount);
                 }
 
                 while ((*path++ = *p++)) {
                     count++;
 
-                    if (count == MAX_LONGPATH) {
-                        --path;
-                        *path = _T('\0');
-                        return;
-                    }
+                    _ASSERTE(count < maxCount);
                 }
         }
         else {
                 /* better add the 0-terminator */
                 *path = _T('\0');
         }
+
+        szPath.Shrink(count + 1);
 }
 
 #if !defined(FEATURE_CORECLR)
