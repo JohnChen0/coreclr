@@ -75,8 +75,8 @@ VOID InstallEEFunctionTable (
     }
     CONTRACTL_END;
 
-    static LPCWSTR wszModuleName = NULL;
-    static SString ssModuleName;
+    static LPWSTR wszModuleName = NULL;
+    static WCHAR  rgwModuleName[MAX_LONGPATH] = { 0 };
 
     if (wszModuleName == NULL)        
     {
@@ -94,10 +94,24 @@ VOID InstallEEFunctionTable (
 
         ssTempName.Set(pszSysDir);
         ssTempName.Append(MAIN_DAC_MODULE_DLL_NAME_W);
-        ssModuleName.Set(ssTempName);
 
-        // publish result
-        InterlockedExchangeT(&wszModuleName, ssModuleName.GetUnicode());
+        if (ssTempName.GetCount() < MAX_LONGPATH)
+        {
+            wcscpy_s(rgwModuleName, MAX_LONGPATH, ssTempName.GetUnicode());
+
+            // publish result
+            InterlockedExchangeT(&wszModuleName, rgwModuleName);
+        }
+        else
+        {
+            NewArrayHolder<WCHAR> wzTempName(DuplicateStringThrowing(ssTempName.GetUnicode()));
+
+            // publish result
+            if (InterlockedCompareExchangeT(&wszModuleName, (LPWSTR)wzTempName, nullptr) == nullptr)
+            {
+                wzTempName.SuppressRelease();
+            }
+        }
     }
 
     if (!RtlInstallFunctionTableCallback(
