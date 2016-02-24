@@ -75,27 +75,29 @@ VOID InstallEEFunctionTable (
     }
     CONTRACTL_END;
 
-    static LPWSTR wszModuleName = NULL;
-    static WCHAR  rgwModuleName[MAX_LONGPATH] = {0};
+    static LPCWSTR wszModuleName = NULL;
+    static SString ssModuleName;
 
     if (wszModuleName == NULL)        
     {
-        WCHAR rgwTempName[MAX_LONGPATH] = {0};
-        DWORD dwTempNameSize = MAX_LONGPATH;
+        StackSString ssTempName;
+        DWORD dwTempNameSize;
 
         // Leaves trailing backslash on path, producing something like "c:\windows\microsoft.net\framework\v4.0.x86dbg\"
-        HRESULT hr = GetInternalSystemDirectory(rgwTempName, &dwTempNameSize);
+        LPCWSTR pszSysDir = GetInternalSystemDirectory(&dwTempNameSize);
 
         //finish creating complete path and copy to buffer if we can
-        if (FAILED(hr) ||
-            (wcscat_s(rgwTempName, MAX_LONGPATH, MAIN_DAC_MODULE_DLL_NAME_W) != 0) ||
-            (wcscpy_s(rgwModuleName, MAX_LONGPATH, rgwTempName) != 0))
+        if (pszSysDir == NULL)
         {   // The CLR should become unavailable in this case.
             EEPOLICY_HANDLE_FATAL_ERROR(COR_E_EXECUTIONENGINE);
         }
 
+        ssTempName.Set(pszSysDir);
+        ssTempName.Append(MAIN_DAC_MODULE_DLL_NAME_W);
+        ssModuleName.Set(ssTempName);
+
         // publish result
-        InterlockedExchangeT(&wszModuleName, rgwModuleName);
+        InterlockedExchangeT(&wszModuleName, ssModuleName.GetUnicode());
     }
 
     if (!RtlInstallFunctionTableCallback(

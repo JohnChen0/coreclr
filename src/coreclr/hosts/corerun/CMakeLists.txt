@@ -23,7 +23,7 @@ else()
     )
 
     target_link_libraries(CoreRun
-        msvcrt.lib
+        msvcrt$<$<OR:$<CONFIG:Debug>,$<CONFIG:Checked>>:d>.lib
     )
 
     # Can't compile on linux yet so only add for windows

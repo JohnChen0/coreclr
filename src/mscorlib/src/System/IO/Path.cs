@@ -104,7 +104,7 @@ namespace System.IO {
         // The max total path is 260, and the max individual component length is 255. 
         // For example, D:\<256 char file name> isn't legal, even though it's under 260 chars.
 #if !PLATFORM_UNIX
-        internal static readonly int MaxPath = 260;
+        internal static readonly int MaxPath = 32767;
 #else
         internal static readonly int MaxPath = 1024;
 #endif
