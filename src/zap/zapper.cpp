@@ -546,6 +546,7 @@ Zapper::Zapper(NGenOptions *pOptions, bool fromDllHost)
         zo->m_compilerFlags |= CORJIT_FLG_PROF_ENTERLEAVE;
     }
 
+#ifdef FEATURE_FUSION
     if (pOptions->lpszRepositoryDir != NULL && pOptions->lpszRepositoryDir[0] != '\0')
     {
         size_t buflen = wcslen(pOptions->lpszRepositoryDir) + 1;
@@ -589,6 +590,7 @@ Zapper::Zapper(NGenOptions *pOptions, bool fromDllHost)
         if (zo->m_repositoryFlags == RepositoryDefault)
             zo->m_repositoryFlags = MoveFromRepository;
     }
+#endif //FEATURE_FUSION
 
     if (pOptions->fInstrument)
         zo->m_compilerFlags |= CORJIT_FLG_BBINSTR;
