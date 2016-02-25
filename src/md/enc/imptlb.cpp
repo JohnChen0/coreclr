@@ -594,7 +594,9 @@ ErrExit:
 HRESULT CImportTlb::_DefineSysRefs()
 {
     HRESULT     hr;                     // A result.
-    CQuickWSTR  szPath;
+    WCHAR       szPath[_MAX_PATH];
+    WCHAR       szDrive[_MAX_DRIVE];
+    WCHAR       szDir[_MAX_PATH];
     DWORD       dwLen;                  // Length of system directory name.
     IMetaDataDispenserEx *pDisp = 0;    // To import mscorlib.
     IMetaDataAssemblyImport *pAImp = 0; // To read mscorlib assembly.
@@ -616,31 +618,16 @@ HRESULT CImportTlb::_DefineSysRefs()
 
     // Get the name of mscorlib.
     //@todo: define, function, etc., instead of hard coded "mscorlib"
-    dwLen = _MAX_PATH;
-    IfFailGo(szPath.ReSizeNoThrow(dwlen));
-    hr = pDisp->GetCORSystemDirectory(szPath.Ptr(), dwLen, &dwLen);
-    if (hr == HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER))
-    {
-        IfFailGo(szPath.ReSizeNoThrow(dwlen));
-        IfFailGo(pDisp->GetCORSystemDirectory(szPath.Ptr(), dwLen, &dwLen));
-    }
-    dwLen = (DWORD)wcslen(szPath.Ptr()) + 13;   // Space for mscorlib.dll and null terminator
-    IfFailGo(szPath.ReSizeNoThrow(dwLen));
-    wcscat_s(szPath.Ptr(), dwLen, W("mscorlib.dll"));
+    dwLen = lengthof(szPath) - 13; // allow space for "mscorlib" ".dll" "\0"
+    IfFailGo(pDisp->GetCORSystemDirectory(szPath, dwLen, &dwLen));
+    SplitPath(szPath, szDrive, _MAX_DRIVE, szDir, _MAX_PATH, 0, 0, 0, 0);
+    MakePath(szPath, szDrive, szDir, W("mscorlib"), W(".dll"));
     
     // Open the scope, get the details.
-    IfFailGo(pDisp->OpenScope(szPath.Ptr(), 0, IID_IMetaDataAssemblyImport, (IUnknown**)&pAImp));
+    IfFailGo(pDisp->OpenScope(szPath, 0, IID_IMetaDataAssemblyImport, (IUnknown**)&pAImp));
     IfFailGo(pAImp->GetAssemblyFromScope(&tk));
-    dwLen = _MAX_PATH;
-    IfFailGo(szPath.ResizeNoThrow(dwLen));
-    hr = pAImp->GetAssemblyProps(tk, &pvPublicKey,&cbPublicKey, &ulHashAlg, 
-        szPath.Ptr(), dwLen, &dwLen, &amd, &dwFlags);
-    if (hr == CLDB_S_TRUNCATION)
-    {
-        IfFailGo(szPath.ResizeNoThrow(dwLen));
-        IfFailGo(pAImp->GetAssemblyProps(tk, &pvPublicKey, &cbPublicKey, &ulHashAlg,
-            szPath.Ptr(), dwLen, &dwLen, &amd, &dwFlags))
-    }
+    IfFailGo(pAImp->GetAssemblyProps(tk, &pvPublicKey,&cbPublicKey, &ulHashAlg, 
+        szPath,lengthof(szPath),&dwLen, &amd, &dwFlags));
     
     if (!StrongNameTokenFromPublicKey((BYTE*)(pvPublicKey),cbPublicKey, &pbToken,&cbToken))
     {
@@ -651,7 +638,7 @@ HRESULT CImportTlb::_DefineSysRefs()
     
     // Define the assembly ref.
     IfFailGo(m_pEmit->QueryInterface(IID_IMetaDataAssemblyEmit, (void**)&pAEmit));
-    IfFailGo(pAEmit->DefineAssemblyRef(pbToken,cbToken, szPath.Ptr(), &amd,0,0,dwFlags, &m_arSystem));
+    IfFailGo(pAEmit->DefineAssemblyRef(pbToken,cbToken, szPath, &amd,0,0,dwFlags, &m_arSystem));
     
     IfFailGo(m_TRMap.DefineTypeRef(m_pEmit, m_arSystem, szObject, &m_trObject));
     

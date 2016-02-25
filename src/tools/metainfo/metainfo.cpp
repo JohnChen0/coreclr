@@ -157,10 +157,9 @@ extern "C" int _cdecl wmain(int argc, __in_ecount(argc) WCHAR **argv)
     // Loop through all files in the file pattern passed
     WIN32_FIND_DATA fdFiles;
     HANDLE hFind;
-    CQuickWSTR szSpec;
-    StackSString ssSpec;
-    StackSString ssDrive;
-    StackSString ssDir;
+    wchar_t szSpec[_MAX_PATH];
+    wchar_t szDrive[_MAX_DRIVE];
+    wchar_t szDir[_MAX_DIR];
 
     hFind = WszFindFirstFile(pArg, &fdFiles);
 
@@ -171,19 +170,14 @@ extern "C" int _cdecl wmain(int argc, __in_ecount(argc) WCHAR **argv)
     else
     {
         // Convert relative paths to full paths.
-        DWORD length = WszGetFullPathName(pArg, _MAX_PATH, ssSpec.OpenUnicodeBuffer(_MAX_PATH - 1), nullptr);
-        if (length >= _MAX_PATH)
-        {
-            ssSpec.CloseBuffer();
-            length = WszGetFullPathName(pArg, length, ssSpec.OpenUnicodeBuffer(length - 1), nullptr);
-        }
-        ssSpec.CloseBuffer(length);
-        SplitPath(ssSpec, &ssDrive, &ssDir, NULL, NULL);
+        LPWSTR szFname;
+        WszGetFullPathName(pArg, _MAX_PATH, szSpec, &szFname);
+        SplitPath(szSpec, szDrive, _MAX_DRIVE, szDir, _MAX_DIR, NULL, 0, NULL, 0);
         do
         {
-            MakePath(szSpec, ssDrive.GetUnicode(), szDir.GetUnicode(), fdFiles.cFileName, NULL);
+            MakePath(szSpec, szDrive, szDir, fdFiles.cFileName, NULL);
             // display the meta data of the file
-            DisplayFile(szSpec.Ptr(), true, DumpFilter, szObjName, DisplayString);
+            DisplayFile(szSpec, true, DumpFilter, szObjName, DisplayString);
         } while (WszFindNextFile(hFind, &fdFiles)) ;
         FindClose(hFind);
     }
