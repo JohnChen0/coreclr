@@ -18,7 +18,6 @@
 
 #include "log.h"
 #include "utilcode.h"
-#include "sstring.h"
 
 #ifdef LOGGING
 
@@ -33,6 +32,7 @@
 
 
 static DWORD    LogFlags                    = 0;
+static CQuickWSTR     szLogFileName;
 static HANDLE   LogFileHandle               = INVALID_HANDLE_VALUE;
 static MUTEX_COOKIE   LogFileMutex                = 0;
 static DWORD    LogFacilityMask             = LF_ALL;
@@ -59,27 +59,36 @@ VOID InitLogging()
     
     LogFacilityMask2 = REGUTIL::GetConfigDWORD_DontUse_(CLRConfig::INTERNAL_LogFacility2, LogFacilityMask2) | LF_ALWAYS;
 
-    StackSString szLogFileName(DEFAULT_LOGFILE_NAME);
+    if (SUCCEEDED(szLogFileName.ReSizeNoThrow(MAX_LONGPATH)))
+    {
+        wcscpy_s(szLogFileName.Ptr(), szLogFileName.Size(), DEFAULT_LOGFILE_NAME);
+    }
 
     LPWSTR fileName = CLRConfig::GetConfigValue(CLRConfig::INTERNAL_LogFile);
     if (fileName != 0)
     {
-        szLogFileName.Set(fileName);
+        if (SUCCEEDED(szLogFileName.ReSizeNoThrow(wcslen(fileName) + 32)))
+        {
+            wcscpy_s(szLogFileName.Ptr(), szLogFileName.Size(), fileName);
+        }
         delete fileName;
     }
 
     if (REGUTIL::GetConfigDWORD_DontUse_(CLRConfig::INTERNAL_LogWithPid, FALSE))
     {
-        szLogFileName.AppendPrintf(W(".%d"), GetCurrentProcessId());
+        WCHAR szPid[20];
+        swprintf_s(szPid, COUNTOF(szPid), W(".%d"), GetCurrentProcessId());
+        wcscat_s(szLogFileName.Ptr(), szLogFileName.Size(), szPid);
     }
 
     if ((LogFlags & LOG_ENABLE) &&
         (LogFlags & LOG_ENABLE_FILE_LOGGING) &&
+        (szLogFileName.Size() > 0) &&
         (LogFileHandle == INVALID_HANDLE_VALUE))
     {
         DWORD fdwCreate = (LogFlags & LOG_ENABLE_APPEND_FILE) ? OPEN_ALWAYS : CREATE_ALWAYS;
         LogFileHandle = WszCreateFile(
-            szLogFileName,
+            szLogFileName.Ptr(),
             GENERIC_WRITE,
             FILE_SHARE_READ,
             NULL,
@@ -97,15 +106,17 @@ VOID InitLogging()
         }
 
             // Some other logging may be going on, try again with another file name
-        if (LogFileHandle == INVALID_HANDLE_VALUE)
+        if (LogFileHandle == INVALID_HANDLE_VALUE && wcslen(szLogFileName.Ptr()) + 3 <= szLogFileName.Size())
         {
-            szLogFileName.Append(W(".0"));
-            SString::Iterator itLastChar = szLogFileName.End() - 1;
+            WCHAR* ptr = szLogFileName.Ptr() + wcslen(szLogFileName.Ptr()) + 1;
+            ptr[-1] = W('.');
+            ptr[0] = W('0');
+            ptr[1] = 0;
 
             for(int i = 0; i < 10; i++)
             {
                 LogFileHandle = WszCreateFile(
-                    szLogFileName,
+                    szLogFileName.Ptr(),
                     GENERIC_WRITE,
                     FILE_SHARE_READ,
                     NULL,
@@ -114,14 +125,25 @@ VOID InitLogging()
                     NULL);
                 if (LogFileHandle != INVALID_HANDLE_VALUE)
                     break;
-                szLogFileName.Replace(itLastChar, *itLastChar + 1);
+                *ptr = *ptr + 1;
             }
             if (LogFileHandle == INVALID_HANDLE_VALUE) {
+                int ret = WszWideCharToMultiByte(CP_ACP, 0, szLogFileName.Ptr(), -1, NULL, 0, NULL, NULL);
+                const char *msg = "Could not open log file, logging to ";
+                DWORD msgLen = (DWORD)strlen(msg);
+                CQuickSTR buff;
+                if (SUCCEEDED(buff.ReSizeNoThrow(ret + msgLen)))
+                {
+                    strcpy_s(buff.Ptr(), buff.Size(), msg);
+                    WszWideCharToMultiByte(CP_ACP, 0, szLogFileName.Ptr(), -1, buff.Ptr() + msgLen, ret, NULL, NULL);
+                    msg = buff.Ptr();
+                }
+                else
+                {
+                    msg = "Could not open log file";
+                }
                 DWORD       written;
-                StackSString msg(W("Could not open log file, logging to "), szLogFileName);
-                StackScratchBuffer buffer;
-                const UTF8 *utf8 = msg.GetUTF8(buffer);
-                WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), utf8, (DWORD)strlen(utf8), &written, 0);
+                WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), msg, (DWORD)strlen(msg), &written, 0);
             }
         }
         if (LogFileHandle == INVALID_HANDLE_VALUE)

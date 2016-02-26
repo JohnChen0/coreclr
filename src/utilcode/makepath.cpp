@@ -203,7 +203,6 @@ void MakePath (
         {
             NOTHROW;
             GC_NOTRIGGER;
-            FORBID_FAULT;
         }
         CONTRACTL_END
 
