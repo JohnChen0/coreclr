@@ -23,6 +23,11 @@ else()
     )
 
     target_link_libraries(CoreRun
+        utilcodestaticnohost
+        advapi32.lib
+        oleaut32.lib
+        uuid.lib
+        user32.lib
         msvcrt$<$<OR:$<CONFIG:Debug>,$<CONFIG:Checked>>:d>.lib
     )
 
