@@ -974,7 +974,6 @@ Exit:
     return retVal;
 }
 
-#ifndef FEATURE_CORECLR
 // Hash and sign a manifest.
 SNAPI StrongNameSignatureGeneration(LPCWSTR     wszFilePath,        // [in] valid path to the PE file for the assembly
                                     LPCWSTR     wszKeyContainer,    // [in] desired key container name
@@ -989,7 +988,6 @@ SNAPI StrongNameSignatureGeneration(LPCWSTR     wszFilePath,        // [in] vali
     END_ENTRYPOINT_VOIDRET;
     return fRetVal;
 }
-#endif // !FEATURE_CORECLR
 
 HRESULT FindAssemblySignaturePublicKey(const SN_LOAD_CTX *pLoadCtx,
                                        __out PublicKeyBlob **ppPublicKey)
@@ -1021,7 +1019,6 @@ HRESULT FindAssemblySignaturePublicKey(const SN_LOAD_CTX *pLoadCtx,
     return S_OK;
 }
 
-#ifndef FEATURE_CORECLR
 SNAPI StrongNameSignatureGenerationEx(LPCWSTR     wszFilePath,        // [in] valid path to the PE file for the assembly
                                       LPCWSTR     wszKeyContainer,    // [in] desired key container name
                                       BYTE       *pbKeyBlob,          // [in] public/private key blob (optional)
@@ -1364,7 +1361,6 @@ SNAPI StrongNameDigestGenerate(_In_z_ LPCWSTR                                   
 Exit:
     return retVal;
 }
-#endif // !FEATURE_CORECLR
 
 //
 // Sign an the digest of an assembly calculated by StrongNameDigestGenerate
@@ -2620,7 +2616,6 @@ BOOLEAN IsCachedCSP(HCRYPTPROV hProv)
     return FALSE;
 }
 
-#ifndef FEATURE_CORECLR
 // rehash all files in a multi-module assembly
 BOOLEAN RehashModules (SN_LOAD_CTX *pLoadCtx, LPCWSTR wszFilePath) {
     HRESULT             hr;
@@ -2758,7 +2753,6 @@ Error:
     SetLastError(hr);
     return FALSE;
 }
-#endif // !FEATURE_CORECLR
 
 //
 // Check that the public key portion of an assembly's identity matches the private key that it is being
