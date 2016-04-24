@@ -493,6 +493,13 @@ BOOL ZapSig::GetSignatureForTypeHandle(TypeHandle      handle,
                 RETURN(FALSE);
 
             pSig += CorSigUncompressToken(pSig, &tk);
+            if (TypeFromToken(tk) == mdtTypeRef)
+            {
+                ENABLE_FORBID_GC_LOADER_USE_IN_THIS_SCOPE();
+                TypeHandle actualHandle = ClassLoader::LoadTypeDefOrRefThrowing(pModule, tk, ClassLoader::ReturnNullIfNotFound, ClassLoader::PermitUninstDefOrRef, tdAllTypes);
+                pModule = actualHandle.GetModule();
+                tk = actualHandle.GetCl();
+            }
             _ASSERTE(TypeFromToken(tk) == mdtTypeDef);
             if (pModule != handle.GetModule() || tk != handle.GetCl())
                 RETURN(FALSE);

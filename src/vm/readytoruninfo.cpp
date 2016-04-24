@@ -14,6 +14,7 @@
 #include "dbginterface.h"
 #include "compile.h"
 #include "stablehashcode.h"
+#include "typehashingalgorithms.h"
 
 using namespace NativeFormat;
 
@@ -101,82 +102,60 @@ BOOL ReadyToRunInfo::TryLookupTypeTokenFromName(NameHandle *pName, mdToken * pFo
     // Compute the hashcode of the type (hashcode based on type name and namespace name)
     //
     DWORD dwHashCode = 0;
+
+    if (pName->GetTypeToken() == mdtBaseType || pName->GetTypeModule() == NULL)
     {
-        if (pName->GetTypeToken() == mdtBaseType)
+        // Name-based lookups (ex: Type.GetType()). 
+
+        pszName = pName->GetName();
+        pszNameSpace = "";
+
+        if (pName->GetNameSpace() != NULL)
         {
-            // Name-based lookups (ex: Type.GetType()). 
-
-            pszName = pName->GetName();
-            pszNameSpace = "";
-
-            if (pName->GetNameSpace() != NULL)
-            {
-                pszNameSpace = pName->GetNameSpace();
-            }
-            else
-            {
-                LPCUTF8 p;
-                CQuickBytes szNamespace;
-
-                if ((p = ns::FindSep(pszName)) != NULL)
-                {
-                    SIZE_T d = p - pszName;
-
-                    FAULT_NOT_FATAL();
-                    pszNameSpace = szNamespace.SetStringNoThrow(pszName, d);
-
-                    if (pszNameSpace == NULL)
-                        return FALSE;
-
-                    pszName = (p + 1);
-                }
-            }
-
-            _ASSERT(pszNameSpace != NULL);
-            dwHashCode = ((dwHashCode << 5) + dwHashCode) ^ HashStringA(pszName);
-            dwHashCode = ((dwHashCode << 5) + dwHashCode) ^ HashStringA(pszNameSpace);
-
-            // Bucket is not 'null' for a nested type, and it will have information about the nested type's encloser
-            if (!pName->GetBucket().IsNull())
-            {
-                // Must be a token based bucket that we found earlier in the R2R types hashtable
-                _ASSERT(pName->GetBucket().GetEntryType() == HashedTypeEntry::IsHashedTokenEntry);
-
-                const HashedTypeEntry::TokenTypeEntry& tokenBasedEncloser = pName->GetBucket().GetTokenBasedEntryValue();
-
-                // Token must be a typedef token that we previously resolved (we shouldn't get here with an exported type token)
-                _ASSERT(TypeFromToken(tokenBasedEncloser.m_TypeToken) == mdtTypeDef);
-
-                mdToken mdCurrentTypeToken = tokenBasedEncloser.m_TypeToken;
-                do
-                {
-                    LPCUTF8 pszNameTemp;
-                    LPCUTF8 pszNameSpaceTemp;
-                    if (!GetTypeNameFromToken(tokenBasedEncloser.m_pModule->GetMDImport(), mdCurrentTypeToken, &pszNameTemp, &pszNameSpaceTemp))
-                        return FALSE;
-
-                    dwHashCode = ((dwHashCode << 5) + dwHashCode) ^ HashStringA(pszNameTemp);
-                    dwHashCode = ((dwHashCode << 5) + dwHashCode) ^ HashStringA(pszNameSpaceTemp == NULL ? "" : pszNameSpaceTemp);
-
-                } while (GetEnclosingToken(tokenBasedEncloser.m_pModule->GetMDImport(), mdCurrentTypeToken, &mdCurrentTypeToken));
-
-            }
+            pszNameSpace = pName->GetNameSpace();
         }
         else
         {
-            // Token based lookups (ex: tokens from IL code)
+            LPCUTF8 p;
+            CQuickBytes szNamespace;
 
-            mdToken mdCurrentTypeToken = pName->GetTypeToken();
-            do
+            if ((p = ns::FindSep(pszName)) != NULL)
             {
-                if (!GetTypeNameFromToken(pName->GetTypeModule()->GetMDImport(), mdCurrentTypeToken, &pszName, &pszNameSpace))
+                SIZE_T d = p - pszName;
+
+                FAULT_NOT_FATAL();
+                pszNameSpace = szNamespace.SetStringNoThrow(pszName, d);
+
+                if (pszNameSpace == NULL)
                     return FALSE;
 
-                dwHashCode = ((dwHashCode << 5) + dwHashCode) ^ HashStringA(pszName);
-                dwHashCode = ((dwHashCode << 5) + dwHashCode) ^ HashStringA(pszNameSpace == NULL ? "" : pszNameSpace);
-
-            } while (GetEnclosingToken(pName->GetTypeModule()->GetMDImport(), mdCurrentTypeToken, &mdCurrentTypeToken));
+                pszName = (p + 1);
+            }
         }
+
+        _ASSERT(pszNameSpace != NULL);
+        dwHashCode ^= ComputeNameHashCode(pszNameSpace, pszName);
+
+        // Bucket is not 'null' for a nested type, and it will have information about the nested type's encloser
+        if (!pName->GetBucket().IsNull())
+        {
+            // Must be a token based bucket that we found earlier in the R2R types hashtable
+            _ASSERT(pName->GetBucket().GetEntryType() == HashedTypeEntry::IsHashedTokenEntry);
+
+            const HashedTypeEntry::TokenTypeEntry& tokenBasedEncloser = pName->GetBucket().GetTokenBasedEntryValue();
+
+            // Token must be a typedef token that we previously resolved (we shouldn't get here with an exported type token)
+            _ASSERT(TypeFromToken(tokenBasedEncloser.m_TypeToken) == mdtTypeDef);
+
+            mdToken mdCurrentTypeToken = tokenBasedEncloser.m_TypeToken;
+            dwHashCode ^= GetVersionResilientTypeHashCode(tokenBasedEncloser.m_pModule->GetMDImport(), mdCurrentTypeToken);
+        }
+    }
+    else
+    {
+        // Token based lookups (ex: tokens from IL code)
+
+        dwHashCode = GetVersionResilientTypeHashCode(pName->GetTypeModule()->GetMDImport(), pName->GetTypeToken());
     }
 
 
@@ -192,7 +171,7 @@ BOOL ReadyToRunInfo::TryLookupTypeTokenFromName(NameHandle *pName, mdToken * pFo
             mdToken cl = ((ridAndFlag & 1) ? ((ridAndFlag >> 1) | mdtExportedType) : ((ridAndFlag >> 1) | mdtTypeDef));
             _ASSERT(RidFromToken(cl) != 0);
 
-            if (pName->GetTypeToken() == mdtBaseType)
+            if (pName->GetTypeToken() == mdtBaseType || pName->GetTypeModule() == NULL)
             {
                 // Compare type name and namespace name
                 LPCUTF8 pszFoundName;
@@ -481,11 +460,6 @@ static bool SigMatchesMethodDesc(MethodDesc* pMD, PCCOR_SIGNATURE pSig, DWORD cS
 {
     STANDARD_VM_CONTRACT;
 
-    BYTE kind = *pSig++;
-    _ASSERTE(kind == ENCODE_METHOD_ENTRY);
-    if (kind != ENCODE_METHOD_ENTRY)
-        return false;
-
     SigPointer sig(pSig);
 
     ZapSig::Context    zapSigContext(pModule, (void *)pModule, ZapSig::NormalTokens);
@@ -551,7 +525,7 @@ PCODE ReadyToRunInfo::GetEntryPoint(MethodDesc * pMD, BOOL fFixups /*=TRUE*/)
         if (m_instMethodEntryPoints.IsNull())
             return NULL;
 
-        NativeHashtable::Enumerator lookup = m_instMethodEntryPoints.Lookup(GetStableMethodHashCode(pMD));
+        NativeHashtable::Enumerator lookup = m_instMethodEntryPoints.Lookup(GetVersionResilientMethodHashCode(pMD));
         NativeParser entryParser;
         offset = -1;
         while (lookup.GetNext(entryParser))

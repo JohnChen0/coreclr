@@ -2524,11 +2524,18 @@ BOOL CEECompileInfo::AreAllClassesFullyLoaded(CORINFO_MODULE_HANDLE moduleHandle
     return ((Module *)moduleHandle)->AreAllClassesFullyLoaded();
 }
 
-int CEECompileInfo::GetStableMethodHashCode(CORINFO_METHOD_HANDLE hMethod)
+DWORD CEECompileInfo::GetVersionResilientTypeHashCode(CORINFO_MODULE_HANDLE moduleHandle, mdToken token)
 {
     STANDARD_VM_CONTRACT;
 
-    return ::GetStableMethodHashCode(GetMethod(hMethod));
+    return ::GetVersionResilientTypeHashCode(((Module *)moduleHandle)->GetMDImport(), token);
+}
+
+DWORD CEECompileInfo::GetVersionResilientMethodHashCode(CORINFO_METHOD_HANDLE methodHandle)
+{
+    STANDARD_VM_CONTRACT;
+
+    return ::GetVersionResilientMethodHashCode(GetMethod(methodHandle));
 }
 
 #endif // FEATURE_READYTORUN_COMPILER

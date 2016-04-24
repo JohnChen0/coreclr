@@ -2204,6 +2204,14 @@ void ZapInfo::getCallInfo(CORINFO_RESOLVED_TOKEN * pResolvedToken,
 #ifdef FEATURE_READYTORUN_COMPILER
         if (IsReadyToRunCompilation())
         {
+            if ((pResult->classFlags & CORINFO_FLG_SHAREDINST) != 0 ||
+                (pResult->methodFlags & CORINFO_FLG_SHAREDINST) != 0)
+            {
+                // READYTORUN: FUTURE: Generics
+                m_zapper->Warning(W("ReadyToRun: Generic dictionary lookup required\n"));
+                ThrowHR(E_NOTIMPL);
+            }
+
             DWORD fAtypicalCallsite = (flags & CORINFO_CALLINFO_ATYPICAL_CALLSITE) ? CORINFO_HELP_READYTORUN_ATYPICAL_CALLSITE : 0;
 
             ZapImport * pImport = m_pImage->GetImportTable()->GetDynamicHelperCell(

@@ -67,6 +67,7 @@
         <CppCompile Include="$(ClrSrcDirectory)\vm\SecurityDescriptorAssembly.cpp" />
         <CppCompile Include="$(ClrSrcDirectory)\vm\siginfo.cpp" />
         <CppCompile Include="$(ClrSrcDirectory)\vm\sigformat.cpp" />
+        <CppCompile Include="$(ClrSrcDirectory)\vm\stablehashcode.cpp" />
         <CppCompile Include="$(ClrSrcDirectory)\vm\stackwalk.cpp" />
         <CppCompile Include="$(ClrSrcDirectory)\vm\stublink.cpp" />
         <CppCompile Include="$(ClrSrcDirectory)\vm\stubmgr.cpp" />

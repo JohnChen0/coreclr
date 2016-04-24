@@ -102,6 +102,7 @@ set(VM_SOURCES_DAC_AND_WKS_COMMON
     sigformat.cpp
     siginfo.cpp
     ../gc/softwarewritewatch.cpp
+    stablehashcode.cpp
     stackwalk.cpp
     stublink.cpp
     stubmgr.cpp
@@ -231,7 +232,6 @@ set(VM_SOURCES_WKS
     simplerwlock.cpp
     sourceline.cpp
     spinlock.cpp
-    stablehashcode.cpp
     stackingallocator.cpp
     stringliteralmap.cpp
     stubcache.cpp

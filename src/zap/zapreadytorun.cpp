@@ -247,14 +247,15 @@ void ZapImage::OutputEntrypointsTableForReadyToRun()
 
         if (sig.sigInst.classInstCount > 0 || sig.sigInst.methInstCount > 0)
         {
-            _ASSERTE(GetCompileInfo()->IsInCurrentVersionBubble(GetJitInfo()->getMethodModule(pMethod->GetHandle())));
+            CORINFO_MODULE_HANDLE module = GetJitInfo()->getClassModule(pMethod->GetClassHandle());
+            _ASSERTE(GetCompileInfo()->IsInCurrentVersionBubble(module));
             SigBuilder sigBuilder;
             CORINFO_RESOLVED_TOKEN resolvedToken = {};
-            resolvedToken.tokenScope = GetJitInfo()->getClassModule(pMethod->GetClassHandle());
+            resolvedToken.tokenScope = module;
             resolvedToken.token = token;
             resolvedToken.hClass = pMethod->GetClassHandle();
             resolvedToken.hMethod = pMethod->GetHandle();
-            GetImportTable()->EncodeMethod(ENCODE_METHOD_ENTRY, pMethod->GetHandle(), &sigBuilder, &resolvedToken);
+            GetCompileInfo()->EncodeMethod(module, pMethod->GetHandle(), &sigBuilder, NULL, NULL, &resolvedToken);
 
             DWORD cbBlob;
             PVOID pBlob = sigBuilder.GetSignature(&cbBlob);
@@ -262,7 +263,7 @@ void ZapImage::OutputEntrypointsTableForReadyToRun()
             BlobVertex * pSigBlob = new (pMemory) BlobVertex(cbBlob);
             memcpy(pSigBlob->GetData(), pBlob, cbBlob);
 
-            DWORD dwHash = GetCompileInfo()->GetStableMethodHashCode(pMethod->GetHandle());
+            DWORD dwHash = GetCompileInfo()->GetVersionResilientMethodHashCode(pMethod->GetHandle());
             vertexHashtable.Append(dwHash, pHashtableSection->Place(new (GetHeap()) EntryPointWithBlobVertex(pMethod->GetMethodIndex(), pFixupBlob, pSigBlob)));
         }
         else
@@ -405,18 +406,8 @@ void ZapImage::OutputTypesTableForReadyToRun(IMDInternalImport * pMDImport)
         mdToken mdTypeToken;
         while (pMDImport->EnumNext(&hEnum, &mdTypeToken))
         {
-            DWORD dwHash = 0;
             mdTypeDef mdCurrentToken = mdTypeToken;
-
-            do
-            {
-                if (FAILED(pMDImport->GetNameOfTypeDef(mdCurrentToken, &pszName, &pszNameSpace)))
-                    ThrowHR(COR_E_BADIMAGEFORMAT);
-
-                dwHash = ((dwHash << 5) + dwHash) ^ HashStringA(pszName);
-                dwHash = ((dwHash << 5) + dwHash) ^ HashStringA(pszNameSpace == NULL ? "" : pszNameSpace);
-
-            } while (SUCCEEDED(pMDImport->GetNestedClassProps(mdCurrentToken, &mdCurrentToken)));
+            DWORD dwHash = GetCompileInfo()->GetVersionResilientTypeHashCode(GetModuleHandle(), mdTypeToken);
 
             typesHashtable.Append(dwHash, pSection->Place(new UnsignedConstant(RidFromToken(mdTypeToken) << 1)));
         }
@@ -430,18 +421,7 @@ void ZapImage::OutputTypesTableForReadyToRun(IMDInternalImport * pMDImport)
         mdToken mdTypeToken;
         while (pMDImport->EnumNext(&hEnum, &mdTypeToken))
         {
-            DWORD dwHash = 0;
-            mdTypeDef mdCurrentToken = mdTypeToken;
-
-            do 
-            {
-                if (FAILED(pMDImport->GetExportedTypeProps(mdCurrentToken, &pszNameSpace, &pszName, &mdCurrentToken, NULL, NULL)))
-                    ThrowHR(COR_E_BADIMAGEFORMAT);
-
-                dwHash = ((dwHash << 5) + dwHash) ^ HashStringA(pszName);
-                dwHash = ((dwHash << 5) + dwHash) ^ HashStringA(pszNameSpace == NULL ? "" : pszNameSpace);
-
-            } while (TypeFromToken(mdCurrentToken) == mdtExportedType);
+            DWORD dwHash = GetCompileInfo()->GetVersionResilientTypeHashCode(GetModuleHandle(), mdTypeToken);
 
             typesHashtable.Append(dwHash, pSection->Place(new UnsignedConstant((RidFromToken(mdTypeToken) << 1) | 1)));
         }

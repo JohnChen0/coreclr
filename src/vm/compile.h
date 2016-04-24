@@ -398,7 +398,9 @@ class CEECompileInfo : public ICorCompileInfo
 
     BOOL AreAllClassesFullyLoaded(CORINFO_MODULE_HANDLE moduleHandle);
 
-    int GetStableMethodHashCode(CORINFO_METHOD_HANDLE hMethod);
+    DWORD GetVersionResilientTypeHashCode(CORINFO_MODULE_HANDLE moduleHandle, mdToken token);
+
+    DWORD GetVersionResilientMethodHashCode(CORINFO_METHOD_HANDLE methodHandle);
 #endif
 
     BOOL HasCustomAttribute(CORINFO_METHOD_HANDLE method, LPCSTR customAttributeName);
