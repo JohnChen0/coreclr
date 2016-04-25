@@ -397,6 +397,8 @@ class CEECompileInfo : public ICorCompileInfo
     void EncodeTypeLayout(CORINFO_CLASS_HANDLE classHandle, SigBuilder * pSigBuilder);
 
     BOOL AreAllClassesFullyLoaded(CORINFO_MODULE_HANDLE moduleHandle);
+
+    int GetStableMethodHashCode(CORINFO_METHOD_HANDLE hMethod);
 #endif
 
     BOOL HasCustomAttribute(CORINFO_METHOD_HANDLE method, LPCSTR customAttributeName);

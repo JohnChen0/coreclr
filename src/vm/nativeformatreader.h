@@ -224,6 +224,23 @@ namespace NativeFormat
                 return offset;
             }
         }
+
+#ifndef DACCESS_COMPILE
+        uint GetBlob(uint offset, uint *pcbBlob, const BYTE **ppBlob)
+        {
+            if (offset >= _size)
+                ThrowBadImageFormatException();
+
+            offset = DecodeUnsigned(offset, pcbBlob);
+            *ppBlob = _base + offset;
+
+            uint newOffset = offset + *pcbBlob;
+            if (newOffset >= _size || newOffset < offset)
+                ThrowBadImageFormatException();
+
+            return newOffset;
+        }
+#endif
 #ifdef _MSC_VER
 #pragma warning(pop)
 #endif
@@ -286,6 +303,15 @@ namespace NativeFormat
 
             return pos + (uint)delta;
         }
+
+#ifndef DACCESS_COMPILE
+        const BYTE * GetBlob(uint *pcbBlob)
+        {
+            const BYTE * pBlob;
+            _offset = _pReader->GetBlob(_offset, pcbBlob, &pBlob);
+            return pBlob;
+        }
+#endif
 
         void SkipInteger()
         {

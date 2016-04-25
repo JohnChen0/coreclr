@@ -231,6 +231,7 @@ set(VM_SOURCES_WKS
     simplerwlock.cpp
     sourceline.cpp
     spinlock.cpp
+    stablehashcode.cpp
     stackingallocator.cpp
     stringliteralmap.cpp
     stubcache.cpp

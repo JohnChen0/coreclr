@@ -13,6 +13,7 @@
 
 #include "dbginterface.h"
 #include "compile.h"
+#include "stablehashcode.h"
 
 using namespace NativeFormat;
 
@@ -456,6 +457,13 @@ ReadyToRunInfo::ReadyToRunInfo(Module * pModule, PEImageLayout * pLayout, READYT
         m_methodDefEntryPoints = NativeArray(&m_nativeReader, pEntryPointsDir->VirtualAddress);
     }
 
+    IMAGE_DATA_DIRECTORY * pinstMethodsDir = FindSection(READYTORUN_SECTION_INSTANCE_METHOD_ENTRYPOINTS);
+    if (pinstMethodsDir != NULL)
+    {
+        NativeParser parser = NativeParser(&m_nativeReader, pinstMethodsDir->VirtualAddress);
+        m_instMethodEntryPoints = NativeHashtable(parser);
+    }
+
     IMAGE_DATA_DIRECTORY * pAvailableTypesDir = FindSection(READYTORUN_SECTION_AVAILABLE_TYPES);
     if (pAvailableTypesDir != NULL)
     {
@@ -469,13 +477,68 @@ ReadyToRunInfo::ReadyToRunInfo(Module * pModule, PEImageLayout * pLayout, READYT
     }
 }
 
-PCODE ReadyToRunInfo::GetEntryPoint(MethodDesc * pMD, BOOL fFixups /*=TRUE*/)
+static bool SigMatchesMethodDesc(MethodDesc* pMD, PCCOR_SIGNATURE pSig, DWORD cSig, Module * pModule)
 {
     STANDARD_VM_CONTRACT;
 
-    // READYTORUN: FUTURE: Support for generics
-    if (pMD->HasClassOrMethodInstantiation())
-        return NULL;
+    BYTE kind = *pSig++;
+    _ASSERTE(kind == ENCODE_METHOD_ENTRY);
+    if (kind != ENCODE_METHOD_ENTRY)
+        return false;
+
+    SigPointer sig(pSig);
+
+    ZapSig::Context    zapSigContext(pModule, (void *)pModule, ZapSig::NormalTokens);
+    ZapSig::Context *  pZapSigContext = &zapSigContext;
+
+    DWORD methodFlags;
+    IfFailThrow(sig.GetData(&methodFlags));
+
+    if (methodFlags & ENCODE_METHOD_SIG_OwnerType)
+    {
+        PCCOR_SIGNATURE pSigType;
+        DWORD cbSigType;
+        sig.GetSignature(&pSigType, &cbSigType);
+        if (!ZapSig::CompareSignatureToTypeHandle(pSigType, pModule, TypeHandle(pMD->GetMethodTable()), pZapSigContext))
+            return false;
+
+        IfFailThrow(sig.SkipExactlyOne());
+    }
+
+    _ASSERTE((methodFlags & ENCODE_METHOD_SIG_SlotInsteadOfToken) == 0);
+    _ASSERTE((methodFlags & ENCODE_METHOD_SIG_MemberRefToken) == 0);
+
+    RID rid;
+    IfFailThrow(sig.GetData(&rid));
+    if (RidFromToken(pMD->GetMemberDef()) != rid)
+        return false;
+
+    if (methodFlags & ENCODE_METHOD_SIG_MethodInstantiation)
+    {
+        DWORD numGenericArgs;
+        IfFailThrow(sig.GetData(&numGenericArgs));
+        Instantiation inst = pMD->GetMethodInstantiation();
+        if (numGenericArgs != inst.GetNumArgs())
+            return false;
+
+        for (DWORD i = 0; i < numGenericArgs; i++)
+        {
+            PCCOR_SIGNATURE pSigArg;
+            DWORD cbSigArg;
+            sig.GetSignature(&pSigArg, &cbSigArg);
+            if (!ZapSig::CompareSignatureToTypeHandle(pSigArg, pModule, inst[i], pZapSigContext))
+                return false;
+
+            IfFailThrow(sig.SkipExactlyOne());
+        }
+    }
+
+    return true;
+}
+
+PCODE ReadyToRunInfo::GetEntryPoint(MethodDesc * pMD, BOOL fFixups /*=TRUE*/)
+{
+    STANDARD_VM_CONTRACT;
 
     mdToken token = pMD->GetMemberDef();
     int rid = RidFromToken(token);
@@ -483,8 +546,33 @@ PCODE ReadyToRunInfo::GetEntryPoint(MethodDesc * pMD, BOOL fFixups /*=TRUE*/)
         return NULL;
 
     uint offset;
-    if (!m_methodDefEntryPoints.TryGetAt(rid - 1, &offset))
-        return NULL;
+    if (pMD->HasClassOrMethodInstantiation())
+    {
+        if (m_instMethodEntryPoints.IsNull())
+            return NULL;
+
+        NativeHashtable::Enumerator lookup = m_instMethodEntryPoints.Lookup(GetStableMethodHashCode(pMD));
+        NativeParser entryParser;
+        offset = -1;
+        while (lookup.GetNext(entryParser))
+        {
+            DWORD cbBlob;
+            PCCOR_SIGNATURE pBlob = (PCCOR_SIGNATURE)entryParser.GetBlob((uint*)&cbBlob);
+            if (SigMatchesMethodDesc(pMD, pBlob, cbBlob, m_pModule))
+            {
+                offset = entryParser.GetOffset();
+                break;
+            }
+        }
+
+        if (offset == -1)
+            return NULL;
+    }
+    else
+    {
+        if (!m_methodDefEntryPoints.TryGetAt(rid - 1, &offset))
+            return NULL;
+    }
 
     uint id;
     offset = m_nativeReader.DecodeUnsigned(offset, &id);

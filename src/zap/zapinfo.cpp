@@ -1677,7 +1677,7 @@ void ZapInfo::embedGenericSignature(CORINFO_LOOKUP * pLookup)
 
     if (IsReadyToRunCompilation())
     {
-        _ASSERTE(!"embedGenericSignature");
+        m_zapper->Warning(W("ReadyToRun: embedGenericSignature not yet supported\n"));
         ThrowHR(E_NOTIMPL);
     }
 
@@ -2231,7 +2231,7 @@ void ZapInfo::getCallInfo(CORINFO_RESOLVED_TOKEN * pResolvedToken,
         if (pResult->exactContextNeedsRuntimeLookup)
         {
             // READYTORUN: FUTURE: Generics
-            _ASSERTE(!"Generics");
+            m_zapper->Warning(W("ReadyToRun: Generic dictionary lookup not yet supported\n"));
             ThrowHR(E_NOTIMPL);
         }
         else
@@ -2976,7 +2976,7 @@ void ZapInfo::getFieldInfo (CORINFO_RESOLVED_TOKEN * pResolvedToken,
 
         case CORINFO_FIELD_STATIC_GENERICS_STATIC_HELPER:
             // READYTORUN: FUTURE: Generics
-            _ASSERTE(!"Generics");
+            m_zapper->Warning(W("ReadyToRun: Shared generic static field access not yet supported\n"));
             ThrowHR(E_NOTIMPL);
             break;
 
@@ -3379,11 +3379,23 @@ void ZapInfo::getReadyToRunHelper(
     switch (id)
     {
     case CORINFO_HELP_READYTORUN_NEW:
+        if ((getClassAttribs(pResolvedToken->hClass) & CORINFO_FLG_SHAREDINST) != 0)
+        {
+            // READYTORUN: FUTURE: Generics
+            m_zapper->Warning(W("ReadyToRun: Generic dictionary lookup required\n"));
+            ThrowHR(E_NOTIMPL);
+        }
         pImport = m_pImage->GetImportTable()->GetDynamicHelperCell(
             (CORCOMPILE_FIXUP_BLOB_KIND)(ENCODE_NEW_HELPER | fAtypicalCallsite), pResolvedToken->hClass);
         break;
 
     case CORINFO_HELP_READYTORUN_NEWARR_1:
+        if ((getClassAttribs(pResolvedToken->hClass) & CORINFO_FLG_SHAREDINST) != 0)
+        {
+            // READYTORUN: FUTURE: Generics
+            m_zapper->Warning(W("ReadyToRun: Generic dictionary lookup required\n"));
+            ThrowHR(E_NOTIMPL);
+        }
         pImport = m_pImage->GetImportTable()->GetDynamicHelperCell(
             (CORCOMPILE_FIXUP_BLOB_KIND)(ENCODE_NEW_ARRAY_HELPER | fAtypicalCallsite), pResolvedToken->hClass);
         break;

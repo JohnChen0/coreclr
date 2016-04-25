@@ -197,6 +197,7 @@
     <CppCompile Include="$(VmSourcesDir)\SimpleRWLock.cpp" />
     <CppCompile Include="$(VmSourcesDir)\SourceLine.cpp" />
     <CppCompile Include="$(VmSourcesDir)\spinlock.cpp" />
+    <CppCompile Include="$(VmSourcesDir)\stablehashcode.cpp" />
     <CppCompile Include="$(VmSourcesDir)\StackingAllocator.cpp" />
     <CppCompile Include="$(VmSourcesDir)\stacksampler.cpp" />
     <CppCompile Include="$(VmSourcesDir)\stackwalk.cpp" />

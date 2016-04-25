@@ -441,6 +441,12 @@ BOOL ZapSig::GetSignatureForTypeHandle(TypeHandle      handle,
         case ELEMENT_TYPE_CLASS:
         {            
             CorSigUncompressToken(pSig, &tk);
+            if (TypeFromToken(tk) == mdtTypeRef)
+            {
+                ENABLE_FORBID_GC_LOADER_USE_IN_THIS_SCOPE();
+                TypeHandle actualHandle = ClassLoader::LoadTypeDefOrRefThrowing(pModule, tk, ClassLoader::ReturnNullIfNotFound, ClassLoader::FailIfUninstDefOrRef, tdAllTypes);
+                RETURN (actualHandle == handle);
+            }
             _ASSERTE(TypeFromToken(tk) == mdtTypeDef);
             RETURN (sigType == handleType && !handle.HasInstantiation() && pModule == handle.GetModule() && handle.GetCl() == tk);
         }
@@ -1157,7 +1163,10 @@ BOOL ZapSig::EncodeMethod(
         {
         case mdtMethodDef:
             _ASSERTE(pResolvedToken->pTypeSpec == NULL);
-            methodFlags &= ~ENCODE_METHOD_SIG_OwnerType;
+            if (!ownerType.HasInstantiation() || ownerType.IsTypicalTypeDefinition())
+            {
+                methodFlags &= ~ENCODE_METHOD_SIG_OwnerType;
+            }
             break;
 
         case mdtMemberRef:

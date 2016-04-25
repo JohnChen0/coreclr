@@ -76,6 +76,8 @@
 
 #include "argdestination.h"
 
+#include "stablehashcode.h"
+
 #ifdef CROSSGEN_COMPILE
 CompilationDomain * theDomain;
 #endif
@@ -2520,6 +2522,13 @@ BOOL CEECompileInfo::AreAllClassesFullyLoaded(CORINFO_MODULE_HANDLE moduleHandle
     STANDARD_VM_CONTRACT;
 
     return ((Module *)moduleHandle)->AreAllClassesFullyLoaded();
+}
+
+int CEECompileInfo::GetStableMethodHashCode(CORINFO_METHOD_HANDLE hMethod)
+{
+    STANDARD_VM_CONTRACT;
+
+    return ::GetStableMethodHashCode(GetMethod(hMethod));
 }
 
 #endif // FEATURE_READYTORUN_COMPILER
@@ -6885,9 +6894,10 @@ CORINFO_METHOD_HANDLE CEEPreloader::LookupMethodDef(mdMethodDef token)
                                      token,
                                      FALSE);
 
-    // READYTORUN: FUTURE: Generics
     if (IsReadyToRunCompilation() && pMD->HasClassOrMethodInstantiation())
-        return NULL;
+    {
+        _ASSERTE(IsCompilationProcess() && pMD->GetModule_NoLogging() == GetAppDomain()->ToCompilationDomain()->GetTargetModule());
+    }
 
     pMD = pMD->FindOrCreateTypicalSharedInstantiation();
 

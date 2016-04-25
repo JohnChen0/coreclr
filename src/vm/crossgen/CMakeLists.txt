@@ -79,6 +79,7 @@ set(VM_CROSSGEN_SOURCES
     ../sigformat.cpp
     ../simplerwlock.cpp
     ../spinlock.cpp
+    ../stablehashcode.cpp
     ../stackingallocator.cpp
     ../stubgen.cpp
     ../stublink.cpp
