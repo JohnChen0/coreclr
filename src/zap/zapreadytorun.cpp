@@ -187,7 +187,6 @@ public:
 
     virtual void Save(NativeWriter * pWriter)
     {
-        pWriter->WriteUnsigned(m_pBlob->GetSize());
         m_pBlob->Save(pWriter);
         EntryPointVertex::Save(pWriter);
     }
@@ -263,7 +262,7 @@ void ZapImage::OutputEntrypointsTableForReadyToRun()
             BlobVertex * pSigBlob = new (pMemory) BlobVertex(cbBlob);
             memcpy(pSigBlob->GetData(), pBlob, cbBlob);
 
-            DWORD dwHash = GetCompileInfo()->GetVersionResilientMethodHashCode(pMethod->GetHandle());
+            int dwHash = GetCompileInfo()->GetVersionResilientMethodHashCode(pMethod->GetHandle());
             vertexHashtable.Append(dwHash, pHashtableSection->Place(new (GetHeap()) EntryPointWithBlobVertex(pMethod->GetMethodIndex(), pFixupBlob, pSigBlob)));
         }
         else

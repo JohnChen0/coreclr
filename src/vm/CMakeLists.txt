@@ -102,7 +102,6 @@ set(VM_SOURCES_DAC_AND_WKS_COMMON
     sigformat.cpp
     siginfo.cpp
     ../gc/softwarewritewatch.cpp
-    stablehashcode.cpp
     stackwalk.cpp
     stublink.cpp
     stubmgr.cpp
@@ -117,6 +116,7 @@ set(VM_SOURCES_DAC_AND_WKS_COMMON
     typestring.cpp
     util.cpp
     vars.cpp
+    versionresilienthashcode.cpp
     virtualcallstub.cpp
     win32threadpool.cpp
     zapsig.cpp

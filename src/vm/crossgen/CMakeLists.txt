@@ -79,7 +79,6 @@ set(VM_CROSSGEN_SOURCES
     ../sigformat.cpp
     ../simplerwlock.cpp
     ../spinlock.cpp
-    ../stablehashcode.cpp
     ../stackingallocator.cpp
     ../stubgen.cpp
     ../stublink.cpp
@@ -91,6 +90,7 @@ set(VM_CROSSGEN_SOURCES
     ../typestring.cpp
     ../util.cpp
     ../vars.cpp
+    ../versionresilienthashcode.cpp
     ../zapsig.cpp
     ../dbggcinfodecoder.cpp
     ../gcinfodecoder.cpp

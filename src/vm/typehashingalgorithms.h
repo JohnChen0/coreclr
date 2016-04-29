@@ -9,18 +9,18 @@
 #pragma once
 #include <stdlib.h>
 
-// DIFFERENT FROM CORERT: Hashing code currently different from CoreRT
-
 //
 // Returns the hashcode value of the 'src' string
 //
-inline static DWORD ComputeNameHashCode(LPCUTF8 src)
+inline static int ComputeNameHashCode(LPCUTF8 src)
 {
     if (src == NULL || *src == '\0')
         return 0;
 
-    DWORD hash1 = 0x6DA3B944;
-    DWORD hash2 = 0;
+    int hash1 = 0x6DA3B944;
+    int hash2 = 0;
+
+    // DIFFERENT FROM CORERT: We hash UTF-8 bytes here, while CoreRT hashes UTF-16 characters.
 
     for (COUNT_T i = 0; src[i] != '\0'; i += 2)
     {
@@ -37,53 +37,48 @@ inline static DWORD ComputeNameHashCode(LPCUTF8 src)
     return hash1 ^ hash2;
 }
 
-inline static DWORD ComputeNameHashCode(LPCUTF8 pszNamespace, LPCUTF8 pszName)
+inline static int ComputeNameHashCode(LPCUTF8 pszNamespace, LPCUTF8 pszName)
 {
+    // DIFFERENT FROM CORERT: CoreRT hashes the full name as one string ("namespace.name"),
+    // as the full name is already available. In CoreCLR we normally only have separate
+    // strings for namespace and name, thus we hash them separately.
     return ComputeNameHashCode(pszNamespace) ^ ComputeNameHashCode(pszName);
 }
 
-inline static DWORD ComputeArrayTypeHashCode(DWORD elementTypeHashcode, DWORD rank)
+inline static int ComputeArrayTypeHashCode(int elementTypeHashcode, int rank)
 {
-    // Arrays are treated as generic types in some parts of our system. The array hashcodes are 
-    // carefully crafted to be the same as the hashcodes of their implementation generic types.
-
-    int hashCode;
+    // DIFFERENT FROM CORERT: This is much simplified compared to CoreRT, to avoid converting.rank to string.
+    // For single-dimensinal array, the result is identical to CoreRT.
+    int hashCode = 0xd5313556 + rank;
     if (rank == 1)
-    {
-        hashCode = 0xd5313557;
         _ASSERTE(hashCode == ComputeNameHashCode("System.Array`1"));
-    }
-    else
-    {
-        hashCode = ComputeNameHashCode("System.MDArray`1") ^ rank;
-    }
 
     hashCode = (hashCode + _rotl(hashCode, 13)) ^ elementTypeHashcode;
     return (hashCode + _rotl(hashCode, 15));
 }
 
-inline static DWORD ComputePointerTypeHashCode(DWORD pointeeTypeHashcode)
+inline static int ComputePointerTypeHashCode(int pointeeTypeHashcode)
 {
     return (pointeeTypeHashcode + _rotl(pointeeTypeHashcode, 5)) ^ 0x12D0;
 }
 
-inline static DWORD ComputeByrefTypeHashCode(DWORD parameterTypeHashcode)
+inline static int ComputeByrefTypeHashCode(int parameterTypeHashcode)
 {
     return (parameterTypeHashcode + _rotl(parameterTypeHashcode, 7)) ^ 0x4C85;
 }
 
-inline static DWORD ComputeNestedTypeHashCode(DWORD enclosingTypeHashcode, DWORD nestedTypeNameHash)
+inline static int ComputeNestedTypeHashCode(int enclosingTypeHashcode, int nestedTypeNameHash)
 {
     return (enclosingTypeHashcode + _rotl(enclosingTypeHashcode, 11)) ^ nestedTypeNameHash;
 }
 
 template <typename TA, typename TB>
-inline static DWORD ComputeGenericInstanceHashCode(DWORD definitionHashcode, DWORD arity, const TA& genericTypeArguments, DWORD (*getHashCode)(TB))
+inline static int ComputeGenericInstanceHashCode(int definitionHashcode, int arity, const TA& genericTypeArguments, int (*getHashCode)(TB))
 {
-    DWORD hashcode = definitionHashcode;
-    for (DWORD i = 0; i < arity; i++)
+    int hashcode = definitionHashcode;
+    for (int i = 0; i < arity; i++)
     {
-        DWORD argumentHashCode = getHashCode(genericTypeArguments[i]);
+        int argumentHashCode = getHashCode(genericTypeArguments[i]);
         hashcode = (hashcode + _rotl(hashcode, 13)) ^ argumentHashCode;
     }
     return (hashcode + _rotl(hashcode, 15));

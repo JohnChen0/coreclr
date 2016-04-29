@@ -226,19 +226,10 @@ namespace NativeFormat
         }
 
 #ifndef DACCESS_COMPILE
-        uint GetBlob(uint offset, uint *pcbBlob, const BYTE **ppBlob)
+        const BYTE* GetBlob(uint offset)
         {
-            if (offset >= _size)
-                ThrowBadImageFormatException();
-
-            offset = DecodeUnsigned(offset, pcbBlob);
-            *ppBlob = _base + offset;
-
-            uint newOffset = offset + *pcbBlob;
-            if (newOffset >= _size || newOffset < offset)
-                ThrowBadImageFormatException();
-
-            return newOffset;
+            EnsureOffsetInRange(offset, 0);
+            return _base + offset;
         }
 #endif
 #ifdef _MSC_VER
@@ -305,11 +296,9 @@ namespace NativeFormat
         }
 
 #ifndef DACCESS_COMPILE
-        const BYTE * GetBlob(uint *pcbBlob)
+        const BYTE * GetBlob()
         {
-            const BYTE * pBlob;
-            _offset = _pReader->GetBlob(_offset, pcbBlob, &pBlob);
-            return pBlob;
+            return _pReader->GetBlob(_offset);
         }
 #endif
 

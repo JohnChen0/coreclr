@@ -443,9 +443,18 @@ BOOL ZapSig::GetSignatureForTypeHandle(TypeHandle      handle,
             CorSigUncompressToken(pSig, &tk);
             if (TypeFromToken(tk) == mdtTypeRef)
             {
-                ENABLE_FORBID_GC_LOADER_USE_IN_THIS_SCOPE();
-                TypeHandle actualHandle = ClassLoader::LoadTypeDefOrRefThrowing(pModule, tk, ClassLoader::ReturnNullIfNotFound, ClassLoader::FailIfUninstDefOrRef, tdAllTypes);
-                RETURN (actualHandle == handle);
+                BOOL resolved = FALSE;
+                EX_TRY
+                {
+                    ENABLE_FORBID_GC_LOADER_USE_IN_THIS_SCOPE();
+                    resolved = ClassLoader::ResolveTokenToTypeDefThrowing(pModule, tk, &pModule, &tk, Loader::DontLoad);
+                }
+                EX_CATCH
+                {
+                }
+                EX_END_CATCH(SwallowAllExceptions);
+                if (!resolved)
+                    RETURN(FALSE);
             }
             _ASSERTE(TypeFromToken(tk) == mdtTypeDef);
             RETURN (sigType == handleType && !handle.HasInstantiation() && pModule == handle.GetModule() && handle.GetCl() == tk);
@@ -495,10 +504,18 @@ BOOL ZapSig::GetSignatureForTypeHandle(TypeHandle      handle,
             pSig += CorSigUncompressToken(pSig, &tk);
             if (TypeFromToken(tk) == mdtTypeRef)
             {
-                ENABLE_FORBID_GC_LOADER_USE_IN_THIS_SCOPE();
-                TypeHandle actualHandle = ClassLoader::LoadTypeDefOrRefThrowing(pModule, tk, ClassLoader::ReturnNullIfNotFound, ClassLoader::PermitUninstDefOrRef, tdAllTypes);
-                pModule = actualHandle.GetModule();
-                tk = actualHandle.GetCl();
+                BOOL resolved = FALSE;
+                EX_TRY
+                {
+                    ENABLE_FORBID_GC_LOADER_USE_IN_THIS_SCOPE();
+                    resolved = ClassLoader::ResolveTokenToTypeDefThrowing(pModule, tk, &pModule, &tk, Loader::DontLoad);
+                }
+                EX_CATCH
+                {
+                }
+                EX_END_CATCH(SwallowAllExceptions);
+                if (!resolved)
+                    RETURN(FALSE);
             }
             _ASSERTE(TypeFromToken(tk) == mdtTypeDef);
             if (pModule != handle.GetModule() || tk != handle.GetCl())

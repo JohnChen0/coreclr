@@ -104,7 +104,6 @@
         <CppCompile Include="$(VmSourcesDir)\SigFormat.cpp" />
         <CppCompile Include="$(VmSourcesDir)\SimpleRWLock.cpp" />
         <CppCompile Include="$(VmSourcesDir)\spinlock.cpp" />
-        <CppCompile Include="$(VmSourcesDir)\stablehashcode.cpp" />
         <CppCompile Include="$(VmSourcesDir)\StackingAllocator.cpp" />
         <CppCompile Include="$(VmSourcesDir)\stubgen.cpp" />
         <CppCompile Include="$(VmSourcesDir)\stublink.cpp" />
@@ -116,6 +115,7 @@
         <CppCompile Include="$(VmSourcesDir)\typestring.cpp" />
         <CppCompile Include="$(VmSourcesDir)\util.cpp" />
         <CppCompile Include="$(VmSourcesDir)\vars.cpp" />
+        <CppCompile Include="$(VmSourcesDir)\versionresilienthashcode.cpp" />
         <CppCompile Include="$(VmSourcesDir)\zapsig.cpp" />
     </ItemGroup>
 

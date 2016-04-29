@@ -76,7 +76,7 @@
 
 #include "argdestination.h"
 
-#include "stablehashcode.h"
+#include "versionresilienthashcode.h"
 
 #ifdef CROSSGEN_COMPILE
 CompilationDomain * theDomain;
@@ -2524,14 +2524,14 @@ BOOL CEECompileInfo::AreAllClassesFullyLoaded(CORINFO_MODULE_HANDLE moduleHandle
     return ((Module *)moduleHandle)->AreAllClassesFullyLoaded();
 }
 
-DWORD CEECompileInfo::GetVersionResilientTypeHashCode(CORINFO_MODULE_HANDLE moduleHandle, mdToken token)
+int CEECompileInfo::GetVersionResilientTypeHashCode(CORINFO_MODULE_HANDLE moduleHandle, mdToken token)
 {
     STANDARD_VM_CONTRACT;
 
     return ::GetVersionResilientTypeHashCode(((Module *)moduleHandle)->GetMDImport(), token);
 }
 
-DWORD CEECompileInfo::GetVersionResilientMethodHashCode(CORINFO_METHOD_HANDLE methodHandle)
+int CEECompileInfo::GetVersionResilientMethodHashCode(CORINFO_METHOD_HANDLE methodHandle)
 {
     STANDARD_VM_CONTRACT;
 

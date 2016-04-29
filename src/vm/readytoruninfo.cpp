@@ -13,7 +13,7 @@
 
 #include "dbginterface.h"
 #include "compile.h"
-#include "stablehashcode.h"
+#include "versionresilienthashcode.h"
 #include "typehashingalgorithms.h"
 
 using namespace NativeFormat;
@@ -101,7 +101,7 @@ BOOL ReadyToRunInfo::TryLookupTypeTokenFromName(NameHandle *pName, mdToken * pFo
     //
     // Compute the hashcode of the type (hashcode based on type name and namespace name)
     //
-    DWORD dwHashCode = 0;
+    int dwHashCode = 0;
 
     if (pName->GetTypeToken() == mdtBaseType || pName->GetTypeModule() == NULL)
     {
@@ -456,11 +456,9 @@ ReadyToRunInfo::ReadyToRunInfo(Module * pModule, PEImageLayout * pLayout, READYT
     }
 }
 
-static bool SigMatchesMethodDesc(MethodDesc* pMD, PCCOR_SIGNATURE pSig, DWORD cSig, Module * pModule)
+static bool SigMatchesMethodDesc(MethodDesc* pMD, SigPointer &sig, Module * pModule)
 {
     STANDARD_VM_CONTRACT;
-
-    SigPointer sig(pSig);
 
     ZapSig::Context    zapSigContext(pModule, (void *)pModule, ZapSig::NormalTokens);
     ZapSig::Context *  pZapSigContext = &zapSigContext;
@@ -530,11 +528,16 @@ PCODE ReadyToRunInfo::GetEntryPoint(MethodDesc * pMD, BOOL fFixups /*=TRUE*/)
         offset = -1;
         while (lookup.GetNext(entryParser))
         {
-            DWORD cbBlob;
-            PCCOR_SIGNATURE pBlob = (PCCOR_SIGNATURE)entryParser.GetBlob((uint*)&cbBlob);
-            if (SigMatchesMethodDesc(pMD, pBlob, cbBlob, m_pModule))
+            PCCOR_SIGNATURE pBlob = (PCCOR_SIGNATURE)entryParser.GetBlob();
+            SigPointer sig(pBlob);
+            if (SigMatchesMethodDesc(pMD, sig, m_pModule))
             {
-                offset = entryParser.GetOffset();
+                // Get the updated SigPointer location, so we can calculate the size of the blob,
+                // in order to skip the blob and find the entry point data.
+                PCCOR_SIGNATURE pSigNew;
+                DWORD cbSigNew;
+                sig.GetSignature(&pSigNew, &cbSigNew);
+                offset = entryParser.GetOffset() + (uint)(pSigNew - pBlob);
                 break;
             }
         }
