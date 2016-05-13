@@ -2215,7 +2215,8 @@ void ZapInfo::getCallInfo(CORINFO_RESOLVED_TOKEN * pResolvedToken,
         if (IsReadyToRunCompilation())
         {
             if ((pResult->classFlags & CORINFO_FLG_SHAREDINST) != 0 ||
-                (pResult->methodFlags & CORINFO_FLG_SHAREDINST) != 0)
+                (pResult->methodFlags & CORINFO_FLG_SHAREDINST) != 0 ||
+                pResult->exactContextNeedsRuntimeLookup)
             {
                 // READYTORUN: FUTURE: Generics
                 m_zapper->Warning(W("ReadyToRun: Generic dictionary lookup required\n"));
