@@ -42,9 +42,7 @@ namespace std
     template <class iter, class comp>
     iter qsort_partition( iter first, iter last, iter pivot, comp compare )
     {
-        iter lastMinusOne = last - 1;
-        swap(pivot, lastMinusOne);
-
+        swap(pivot, last - 1);
         // Pivot is at end
         pivot = last - 1;
 

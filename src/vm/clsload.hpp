@@ -53,66 +53,6 @@ typedef enum NameHandleTable
     nhCaseInsensitive = 1
 } NameHandleTable;
 
-class HashedTypeEntry
-{
-public:
-    typedef enum
-    {
-        IsNullEntry,            // Uninitialized HashedTypeEntry
-        IsHashedTokenEntry,     // Entry is a token value in a R2R hashtable in from the R2R module
-        IsHashedClassEntry      // Entry is a EEClassHashEntry_t from the hashtable constructed at 
-                                // module load time (or from the hashtable loaded from the native image)
-    } EntryType;
-
-    typedef struct
-    {
-        mdToken     m_TypeToken;
-        Module *    m_pModule;
-    } TokenTypeEntry;
-
-private:
-    EntryType m_EntryType;
-    union
-    {
-        PTR_EEClassHashEntry    m_pClassHashEntry;
-        TokenTypeEntry          m_TokenAndModulePair;
-    };
-
-public:
-    HashedTypeEntry()
-    {
-        m_EntryType = EntryType::IsNullEntry;
-        m_pClassHashEntry = PTR_NULL;
-    }
-
-    EntryType GetEntryType() { return m_EntryType; }
-    bool IsNull() { return m_EntryType == EntryType::IsNullEntry; }
-
-    const HashedTypeEntry& SetClassHashBasedEntryValue(EEClassHashEntry_t * pClassHashEntry)
-    {
-        m_EntryType = EntryType::IsHashedClassEntry;
-        m_pClassHashEntry = dac_cast<PTR_EEClassHashEntry>(pClassHashEntry);
-        return *this;
-    }
-    EEClassHashEntry_t * GetClassHashBasedEntryValue()
-    {
-        _ASSERT(m_EntryType == EntryType::IsHashedClassEntry);
-        return m_pClassHashEntry;
-    }
-
-    const HashedTypeEntry& SetTokenBasedEntryValue(mdTypeDef typeToken, Module * pModule)
-    {
-        m_EntryType = EntryType::IsHashedTokenEntry;
-        m_TokenAndModulePair.m_TypeToken = typeToken;
-        m_TokenAndModulePair.m_pModule = pModule;
-        return *this;
-    }
-    const TokenTypeEntry& GetTokenBasedEntryValue()
-    {
-        _ASSERT(m_EntryType == EntryType::IsHashedTokenEntry);
-        return m_TokenAndModulePair;
-    }
-};
 
 class NameHandle
 {
@@ -125,7 +65,7 @@ class NameHandle
     mdToken m_mdType;
     mdToken m_mdTokenNotToLoad;
     NameHandleTable m_WhichTable;
-    HashedTypeEntry m_Bucket;
+    PTR_EEClassHashEntry m_pBucket;
 
 public:
 
@@ -142,7 +82,7 @@ public:
         m_mdType(mdTokenNil),
         m_mdTokenNotToLoad(tdNoTypes),
         m_WhichTable(nhCaseSensitive),
-        m_Bucket()
+        m_pBucket(PTR_NULL)
     {
         LIMITED_METHOD_CONTRACT;
     }
@@ -154,7 +94,7 @@ public:
         m_mdType(mdTokenNil),
         m_mdTokenNotToLoad(tdNoTypes),
         m_WhichTable(nhCaseSensitive),
-        m_Bucket()
+        m_pBucket(PTR_NULL)
     {
         LIMITED_METHOD_CONTRACT;
         SUPPORTS_DAC;
@@ -167,7 +107,7 @@ public:
         m_mdType(token),
         m_mdTokenNotToLoad(tdNoTypes),
         m_WhichTable(nhCaseSensitive),
-        m_Bucket()
+        m_pBucket(PTR_NULL)
     {
         LIMITED_METHOD_CONTRACT;
         SUPPORTS_DAC;
@@ -183,7 +123,7 @@ public:
         m_mdType = p.m_mdType;
         m_mdTokenNotToLoad = p.m_mdTokenNotToLoad;
         m_WhichTable = p.m_WhichTable;
-        m_Bucket = p.m_Bucket;
+        m_pBucket = p.m_pBucket;
     }
 
     void SetName(LPCUTF8 pName)
@@ -263,19 +203,19 @@ public:
         return m_WhichTable;
     }
 
-    void SetBucket(const HashedTypeEntry& bucket)
+    void SetBucket(EEClassHashEntry_t * pBucket)
     {
         LIMITED_METHOD_CONTRACT;
         SUPPORTS_DAC;   // "this" must be a host address
-        m_Bucket = bucket;
+        m_pBucket = dac_cast<PTR_EEClassHashEntry>(pBucket);
     }
 
 
-    HashedTypeEntry& GetBucket()
+    EEClassHashEntry_t * GetBucket()
     {
         LIMITED_METHOD_CONTRACT;
         SUPPORTS_DAC;
-        return m_Bucket;
+        return m_pBucket;
     }
 
     static BOOL OKToLoad(mdToken token, mdToken tokenNotToLoad)
@@ -611,18 +551,14 @@ private:
     VOID PopulateAvailableClassHashTable(Module *pModule,
                                          AllocMemTracker *pamTracker);
 
-    void LazyPopulateCaseSensitiveHashTables();
     void LazyPopulateCaseInsensitiveHashTables();
 
     // Lookup the hash table entry from the hash table
-    void GetClassValue(NameHandleTable nhTable,
+    EEClassHashEntry_t *GetClassValue(NameHandleTable nhTable,
                                       NameHandle *pName,
                                       HashDatum *pData,
                                       EEClassHashTable **ppTable,
-                                      Module* pLookInThisModuleOnly,
-                                      HashedTypeEntry* pFoundEntry,
-                                      Loader::LoadFlag loadFlag,
-                                      BOOL& needsToBuildHashtable);
+                                      Module* pLookInThisModuleOnly);
 
 
 public:
@@ -647,13 +583,14 @@ private:
                                           Instantiation classInst,        // the type arguments to the type (if any)
                                           Instantiation methodInst);      // the type arguments to the method (if any)
 
-    BOOL FindClassModuleThrowing(
+    BOOL 
+    FindClassModuleThrowing(
         const NameHandle *    pName, 
         TypeHandle *          pType, 
         mdToken *             pmdClassToken, 
         Module **             ppModule, 
         mdToken *             pmdFoundExportedType, 
-        HashedTypeEntry *     pEntry,
+        EEClassHashEntry_t ** ppEntry, 
         Module *              pLookInThisModuleOnly, 
         Loader::LoadFlag      loadFlag);
 

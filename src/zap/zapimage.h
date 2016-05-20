@@ -220,10 +220,6 @@ public:
     ZapVirtualSection * m_pColdUnwindDataSection;
 #endif // defined(WIN64EXCEPTIONS)
 
-#ifdef FEATURE_READYTORUN_COMPILER
-    ZapVirtualSection * m_pAvailableTypesSection;
-#endif
-
     // Preloader sections
     ZapVirtualSection * m_pPreloadSections[CORCOMPILE_SECTION_COUNT];
 
@@ -556,7 +552,6 @@ private:
 
     void OutputEntrypointsTableForReadyToRun();
     void OutputDebugInfoForReadyToRun();
-    void OutputTypesTableForReadyToRun(IMDInternalImport * pMDImport);
 
     void CopyDebugDirEntry();
     void CopyWin32VersionResource();

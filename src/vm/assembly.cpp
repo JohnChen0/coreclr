@@ -282,8 +282,7 @@ void Assembly::Init(AllocMemTracker *pamTracker, LoaderAllocator *pLoaderAllocat
 
     CacheManifestFiles();
 
-    if (!m_pManifest->IsReadyToRun())
-        CacheManifestExportedTypes(pamTracker);
+    CacheManifestExportedTypes(pamTracker);
 
 #if !defined(FEATURE_CORECLR) && !defined(CROSSGEN_COMPILE)
     GenerateBreadcrumbForServicing();
@@ -1972,11 +1971,12 @@ void Assembly::PrepareModuleForAssembly(Module* module, AllocMemTracker *pamTrac
     }
     CONTRACTL_END;
     
-    if (module->m_pAvailableClasses != NULL && !module->IsPersistedObject(module->m_pAvailableClasses)) 
-    {
-        // ! We intentionally do not take the AvailableClass lock here. It creates problems at
-        // startup and we haven't yet published the module yet so nobody should be searching it.
-        m_pClassLoader->PopulateAvailableClassHashTable(module, pamTracker);
+    if (!module->IsPersistedObject(module->m_pAvailableClasses)) {
+        if (!(module->IsResource()))
+            // ! We intentionally do not take the AvailableClass lock here. It creates problems at
+            // startup and we haven't yet published the module yet so nobody should be searching it.
+            m_pClassLoader->PopulateAvailableClassHashTable(module,
+                                                            pamTracker);
     }
 
 
