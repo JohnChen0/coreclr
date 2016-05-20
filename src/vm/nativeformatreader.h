@@ -236,9 +236,9 @@ namespace NativeFormat
         {
         }
         
-        NativeParser(PTR_NativeReader pReader, uint offset)
+        NativeParser(NativeReader * pReader, uint offset)
         {
-            _pReader = pReader;
+            _pReader = dac_cast<PTR_NativeReader>(pReader);
             _offset = offset;
         }
 
@@ -309,7 +309,7 @@ namespace NativeFormat
         {
         }
 
-        NativeArray(PTR_NativeReader pReader, uint offset)
+        NativeArray(NativeReader * pReader, uint offset)
             : _pReader(pReader)
         {
             uint val;
