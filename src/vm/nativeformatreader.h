@@ -181,10 +181,6 @@ namespace NativeFormat
             return offset;
         }
 
-#ifdef _MSC_VER
-#pragma warning(push)
-#pragma warning(disable : 4702) // Disable unreachable code warning
-#endif
         uint SkipInteger(uint offset)
         {
             EnsureOffsetInRange(offset, 0);
@@ -220,9 +216,6 @@ namespace NativeFormat
                 return offset;
             }
         }
-#ifdef _MSC_VER
-#pragma warning(pop)
-#endif
     };
 
     class NativeParser
