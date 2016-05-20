@@ -71,9 +71,12 @@ public:
     } TokenTypeEntry;
 
 private:
-    EntryType               m_EntryType;
-    PTR_EEClassHashEntry    m_pClassHashEntry;
-    TokenTypeEntry          m_TokenAndModulePair;
+    EntryType m_EntryType;
+    union
+    {
+        PTR_EEClassHashEntry    m_pClassHashEntry;
+        TokenTypeEntry          m_TokenAndModulePair;
+    };
 
 public:
     HashedTypeEntry()
