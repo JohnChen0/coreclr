@@ -44,11 +44,7 @@ namespace NativeFormat
         void ThrowBadImageFormatException()
         {
             _ASSERTE(false);
-
-#ifndef DACCESS_COMPILE
-            // Failfast instead of throwing, to avoid violating NOTHROW contracts of callers
-            EEPOLICY_HANDLE_FATAL_ERROR(COR_E_BADIMAGEFORMAT);
-#endif
+            ThrowHR(COR_E_BADIMAGEFORMAT);
         }
 
         uint EnsureOffsetInRange(uint offset, uint lookAhead)
