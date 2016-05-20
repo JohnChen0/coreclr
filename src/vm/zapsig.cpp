@@ -441,21 +441,6 @@ BOOL ZapSig::GetSignatureForTypeHandle(TypeHandle      handle,
         case ELEMENT_TYPE_CLASS:
         {            
             CorSigUncompressToken(pSig, &tk);
-            if (TypeFromToken(tk) == mdtTypeRef)
-            {
-                BOOL resolved = FALSE;
-                EX_TRY
-                {
-                    ENABLE_FORBID_GC_LOADER_USE_IN_THIS_SCOPE();
-                    resolved = ClassLoader::ResolveTokenToTypeDefThrowing(pModule, tk, &pModule, &tk, Loader::DontLoad);
-                }
-                EX_CATCH
-                {
-                }
-                EX_END_CATCH(SwallowAllExceptions);
-                if (!resolved)
-                    RETURN(FALSE);
-            }
             _ASSERTE(TypeFromToken(tk) == mdtTypeDef);
             RETURN (sigType == handleType && !handle.HasInstantiation() && pModule == handle.GetModule() && handle.GetCl() == tk);
         }
@@ -502,21 +487,6 @@ BOOL ZapSig::GetSignatureForTypeHandle(TypeHandle      handle,
                 RETURN(FALSE);
 
             pSig += CorSigUncompressToken(pSig, &tk);
-            if (TypeFromToken(tk) == mdtTypeRef)
-            {
-                BOOL resolved = FALSE;
-                EX_TRY
-                {
-                    ENABLE_FORBID_GC_LOADER_USE_IN_THIS_SCOPE();
-                    resolved = ClassLoader::ResolveTokenToTypeDefThrowing(pModule, tk, &pModule, &tk, Loader::DontLoad);
-                }
-                EX_CATCH
-                {
-                }
-                EX_END_CATCH(SwallowAllExceptions);
-                if (!resolved)
-                    RETURN(FALSE);
-            }
             _ASSERTE(TypeFromToken(tk) == mdtTypeDef);
             if (pModule != handle.GetModule() || tk != handle.GetCl())
                 RETURN(FALSE);
@@ -1187,10 +1157,7 @@ BOOL ZapSig::EncodeMethod(
         {
         case mdtMethodDef:
             _ASSERTE(pResolvedToken->pTypeSpec == NULL);
-            if (!ownerType.HasInstantiation() || ownerType.IsTypicalTypeDefinition())
-            {
-                methodFlags &= ~ENCODE_METHOD_SIG_OwnerType;
-            }
+            methodFlags &= ~ENCODE_METHOD_SIG_OwnerType;
             break;
 
         case mdtMemberRef:

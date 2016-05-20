@@ -1681,7 +1681,7 @@ void ZapInfo::embedGenericSignature(CORINFO_LOOKUP * pLookup)
 
     if (IsReadyToRunCompilation())
     {
-        m_zapper->Warning(W("ReadyToRun: embedGenericSignature not yet supported\n"));
+        _ASSERTE(!"embedGenericSignature");
         ThrowHR(E_NOTIMPL);
     }
 
@@ -2214,14 +2214,6 @@ void ZapInfo::getCallInfo(CORINFO_RESOLVED_TOKEN * pResolvedToken,
 #ifdef FEATURE_READYTORUN_COMPILER
         if (IsReadyToRunCompilation())
         {
-            if ((pResult->classFlags & CORINFO_FLG_SHAREDINST) != 0 ||
-                (pResult->methodFlags & CORINFO_FLG_SHAREDINST) != 0)
-            {
-                // READYTORUN: FUTURE: Generics
-                m_zapper->Warning(W("ReadyToRun: Generic dictionary lookup required\n"));
-                ThrowHR(E_NOTIMPL);
-            }
-
             DWORD fAtypicalCallsite = (flags & CORINFO_CALLINFO_ATYPICAL_CALLSITE) ? CORINFO_HELP_READYTORUN_ATYPICAL_CALLSITE : 0;
 
             ZapImport * pImport = m_pImage->GetImportTable()->GetDynamicHelperCell(
@@ -2249,7 +2241,7 @@ void ZapInfo::getCallInfo(CORINFO_RESOLVED_TOKEN * pResolvedToken,
         if (pResult->exactContextNeedsRuntimeLookup)
         {
             // READYTORUN: FUTURE: Generics
-            m_zapper->Warning(W("ReadyToRun: Generic dictionary lookup not yet supported\n"));
+            _ASSERTE(!"Generics");
             ThrowHR(E_NOTIMPL);
         }
         else
@@ -3007,7 +2999,7 @@ void ZapInfo::getFieldInfo (CORINFO_RESOLVED_TOKEN * pResolvedToken,
 
         case CORINFO_FIELD_STATIC_GENERICS_STATIC_HELPER:
             // READYTORUN: FUTURE: Generics
-            m_zapper->Warning(W("ReadyToRun: Shared generic static field access not yet supported\n"));
+            _ASSERTE(!"Generics");
             ThrowHR(E_NOTIMPL);
             break;
 
@@ -3411,23 +3403,11 @@ bool ZapInfo::getReadyToRunHelper(
     switch (id)
     {
     case CORINFO_HELP_READYTORUN_NEW:
-        if ((getClassAttribs(pResolvedToken->hClass) & CORINFO_FLG_SHAREDINST) != 0)
-        {
-            // READYTORUN: FUTURE: Generics
-            m_zapper->Warning(W("ReadyToRun: Generic dictionary lookup required\n"));
-            ThrowHR(E_NOTIMPL);
-        }
         pImport = m_pImage->GetImportTable()->GetDynamicHelperCell(
             (CORCOMPILE_FIXUP_BLOB_KIND)(ENCODE_NEW_HELPER | fAtypicalCallsite), pResolvedToken->hClass);
         break;
 
     case CORINFO_HELP_READYTORUN_NEWARR_1:
-        if ((getClassAttribs(pResolvedToken->hClass) & CORINFO_FLG_SHAREDINST) != 0)
-        {
-            // READYTORUN: FUTURE: Generics
-            m_zapper->Warning(W("ReadyToRun: Generic dictionary lookup required\n"));
-            ThrowHR(E_NOTIMPL);
-        }
         pImport = m_pImage->GetImportTable()->GetDynamicHelperCell(
             (CORCOMPILE_FIXUP_BLOB_KIND)(ENCODE_NEW_ARRAY_HELPER | fAtypicalCallsite), pResolvedToken->hClass);
         break;

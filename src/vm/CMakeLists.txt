@@ -113,7 +113,6 @@ set(VM_SOURCES_DAC_AND_WKS_COMMON
     typestring.cpp
     util.cpp
     vars.cpp
-    versionresilienthashcode.cpp
     virtualcallstub.cpp
     win32threadpool.cpp
     zapsig.cpp

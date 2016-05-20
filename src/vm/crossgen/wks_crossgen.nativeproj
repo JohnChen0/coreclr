@@ -115,7 +115,6 @@
         <CppCompile Include="$(VmSourcesDir)\typestring.cpp" />
         <CppCompile Include="$(VmSourcesDir)\util.cpp" />
         <CppCompile Include="$(VmSourcesDir)\vars.cpp" />
-        <CppCompile Include="$(VmSourcesDir)\versionresilienthashcode.cpp" />
         <CppCompile Include="$(VmSourcesDir)\zapsig.cpp" />
     </ItemGroup>
 
