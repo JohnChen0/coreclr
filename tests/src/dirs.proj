@@ -23,10 +23,10 @@
     </ItemGroup>
     
     <ItemGroup>
-      <Project Include="*\**\*.csproj" Exclude="@(DisabledProjects)">
+      <Project Include="readytorun\**\*.csproj" Exclude="@(DisabledProjects)">
         <AdditionalProperties>OSGroup=$(OSGroup)</AdditionalProperties>
       </Project>
-      <Project Include="*\**\*.ilproj" Exclude="@(DisabledProjects)">
+      <Project Include="readytorun\**\*.ilproj" Exclude="@(DisabledProjects)">
         <AdditionalProperties>OSGroup=$(OSGroup)</AdditionalProperties>
       </Project>
     </ItemGroup>

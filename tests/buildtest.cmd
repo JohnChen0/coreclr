@@ -173,6 +173,8 @@ set __msbuildCommonArgs=/nologo /nodeReuse:false %__msbuildExtraArgs%
 if not defined __BuildSequential (
     set __msbuildCommonArgs=%__msbuildCommonArgs% /maxcpucount
 )
+
+goto :foobar
 REM =========================================================================================
 REM ===
 REM === Restore Build Tools
@@ -240,7 +242,7 @@ call :msbuild "%__NativeTestIntermediatesDir%\install.vcxproj" %__msbuildNativeA
 if errorlevel 1 exit /b 1
 REM endlocal to rid us of environment changes from vcvarsall.bat
 endlocal
-
+:foobar
 REM =========================================================================================
 REM ===
 REM === Managed test build section

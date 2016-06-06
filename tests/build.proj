@@ -22,8 +22,8 @@
     <Message Importance="High" Text="[$([System.DateTime]::Now.ToString('HH:mm:ss.ff'))] Restoring all packages..." />
     
     <!-- restore all project.jsons in one pass for perf & to avoid concurrency problems -->
-    <Exec Command="$(DnuRestoreCommand) $(DnuRestoreDirs)"
-          StandardOutputImportance="Low" />
+    <!--Exec Command="$(DnuRestoreCommand) $(DnuRestoreDirs)"
+          StandardOutputImportance="Low" /-->
           
     <Message Importance="High" Text="[$([System.DateTime]::Now.ToString('HH:mm:ss.ff'))] Restoring all packages...Done." />
   </Target>
