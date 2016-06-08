@@ -22,7 +22,8 @@ enum {
     LF_ALL           = 0xFFFFFFFF, // Used only to mask bits. Never use as LOG((LF_ALL, ...))
 
     // LogFacility2: all 32-bit of LogFacility are used, need a 2nd DWORD for more facilities
-    LF2_MULTICOREJIT = 0x00000001  // Multicore JIT
+    LF2_MULTICOREJIT = 0x00000001, // Multicore JIT
+    LF2_R2RLOAD      = 0x00000002, // Ready to Run image loading
 };
 
 
@@ -52,6 +53,25 @@ enum {
 
 #define LOG(x)
 #define LOG2(x)
+
+#else
+
+#define LOG(x)      do { if (LoggingEnabled()) { LogSpew x; } } while (0)
+#define LOG2(x)     do { if (LoggingEnabled()) { LogSpew2 x; } } while (0)
+
+#endif
+
+#ifndef RETAIL_LOGGING
+
+#define RETAIL_LOG2(x)
+
+#else
+
+#define RETAIL_LOG2(x)     do { if (LoggingEnabled()) { LogSpew2 x; } } while (0)
+
+#endif
+
+#if !defined(LOGGING) && !defined(RETAIL_LOGGING)
 
 #define InitializeLogging()
 #define InitLogging()
@@ -85,10 +105,6 @@ VOID SetLoggingLevel( DWORD level );
 bool LoggingEnabled();
 bool LoggingOn(DWORD facility, DWORD level);
 bool Logging2On(DWORD facility, DWORD level);
-
-#define LOG(x)      do { if (LoggingEnabled()) { LogSpew x; } } while (0)
-
-#define LOG2(x)     do { if (LoggingEnabled()) { LogSpew2 x; } } while (0)
 
 #endif
 

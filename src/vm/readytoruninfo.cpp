@@ -357,6 +357,8 @@ PTR_ReadyToRunInfo ReadyToRunInfo::Initialize(Module * pModule, AllocMemTracker 
 
     PEFile * pFile = pModule->GetFile();
 
+    RETAIL_LOG2((LF2_R2RLOAD, LL_INFO100, "R2r test: \"%s\".\n", pFile->GetSimpleName()));
+
     // Ignore ReadyToRun for introspection-only loads
     if (pFile->IsIntrospectionOnly())
         return NULL;
