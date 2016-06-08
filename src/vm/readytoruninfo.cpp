@@ -379,7 +379,7 @@ PTR_ReadyToRunInfo ReadyToRunInfo::Initialize(Module * pModule, AllocMemTracker 
 
     if (!IsReadyToRunEnabled())
     {
-        RETAIL_LOG2((LF2_R2RLOAD, LL_WARNING, "Ready to Run disabled for current domain.\n"));
+        RETAIL_LOG2((LF2_R2RLOAD, LL_WARNING, "Ready to Run disabled for current AppDomain.\n"));
         return NULL;
     }
 
