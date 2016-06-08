@@ -36,6 +36,9 @@
 #if defined(_DEBUG) && !defined(DACCESS_COMPILE)
     #define LOGGING
 #endif
+#ifndef DACCESS_COMPILE
+    #define RETAIL_LOGGING
+#endif
 
 #if !defined(_TARGET_X86_)
 #define WIN64EXCEPTIONS

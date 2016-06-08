@@ -15,11 +15,12 @@
 #ifdef _DEBUG
 #define LOGGING
 #endif
+#define RETAIL_LOGGING
 
 #include "log.h"
 #include "utilcode.h"
 
-#ifdef LOGGING
+#if defined(LOGGING) || defined(RETAIL_LOGGING)
 
 #define DEFAULT_LOGFILE_NAME    W("COMPLUS.LOG")
 
@@ -265,8 +266,6 @@ VOID LogSpewValist(DWORD facility, DWORD level, const char *fmt, va_list args)
     if (!LoggingOn(facility, level))
         return;
 
-    DEBUG_ONLY_FUNCTION;
-
     LogSpewAlwaysValist(fmt, args);
 }
 
@@ -280,8 +279,6 @@ VOID LogSpew2Valist(DWORD facility2, DWORD level, const char *fmt, va_list args)
     if (!Logging2On(facility2, level))
         return;
 
-    DEBUG_ONLY_FUNCTION;
-
     LogSpewAlwaysValist(fmt, args);
 }
 
@@ -291,8 +288,6 @@ VOID LogSpewAlwaysValist(const char *fmt, va_list args)
     SCAN_IGNORE_FAULT;  // calls to new (nothrow) in logging code are OK
     STATIC_CONTRACT_NOTHROW;
     STATIC_CONTRACT_GC_NOTRIGGER;
-    
-    DEBUG_ONLY_FUNCTION;
 
     // We can't do heap allocations at all.  The current thread may have
     // suspended another thread, and the suspended thread may be inside of the
@@ -462,5 +457,5 @@ VOID LogSpewAlways (const char *fmt, ... )
     LEAVE_SO_NOT_MAINLINE_CODE;
 }
 
-#endif // LOGGING
+#endif // LOGGING || RETAIL_LOGGING
 

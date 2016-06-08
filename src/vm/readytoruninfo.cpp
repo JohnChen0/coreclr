@@ -359,20 +359,35 @@ PTR_ReadyToRunInfo ReadyToRunInfo::Initialize(Module * pModule, AllocMemTracker 
 
     // Ignore ReadyToRun for introspection-only loads
     if (pFile->IsIntrospectionOnly())
+    {
+        RETAIL_LOG2((LF2_R2RLOAD, LL_WARNING, "Ready to Run disabled - module loaded for reflection: \"%s\".\n", pFile->GetSimpleName()));
         return NULL;
+    }
 
     if (!pFile->HasLoadedIL())
+    {
+        RETAIL_LOG2((LF2_R2RLOAD, LL_WARNING, "Ready to Run disabled - no loaded IL image: \"%s\".\n", pFile->GetSimpleName()));
         return NULL;
+    }
 
     PEImageLayout * pLayout = pFile->GetLoadedIL();
     if (!pLayout->HasReadyToRunHeader())
+    {
+        RETAIL_LOG2((LF2_R2RLOAD, LL_WARNING, "Ready to Run header not found: \"%s\".\n", pFile->GetSimpleName()));
         return NULL;
+    }
 
     if (!IsReadyToRunEnabled())
+    {
+        RETAIL_LOG2((LF2_R2RLOAD, LL_WARNING, "Ready to Run disabled for current AppDomain.\n"));
         return NULL;
+    }
 
     if (g_pConfig->ExcludeReadyToRun(pModule->GetSimpleName()))
+    {
+        RETAIL_LOG2((LF2_R2RLOAD, LL_WARNING, "Ready to Run disabled - module on exclusion list: \"%s\".\n", pFile->GetSimpleName()));
         return NULL;
+    }
 
     if (!pLayout->IsNativeMachineFormat())
     {
@@ -380,6 +395,7 @@ PTR_ReadyToRunInfo ReadyToRunInfo::Initialize(Module * pModule, AllocMemTracker 
         // For CoreCLR, be strict about disallowing machine mismatches.
         COMPlusThrowHR(COR_E_BADIMAGEFORMAT);
 #else
+        RETAIL_LOG2((LF2_R2RLOAD, LL_WARNING, "Ready to Run disabled - mismatched architecture: \"%s\".\n", pFile->GetSimpleName()));
         return NULL;
 #endif
     }
@@ -387,23 +403,34 @@ PTR_ReadyToRunInfo ReadyToRunInfo::Initialize(Module * pModule, AllocMemTracker 
 #ifdef FEATURE_NATIVE_IMAGE_GENERATION
     // Ignore ReadyToRun during NGen
     if (IsCompilationProcess() && !IsNgenPDBCompilationProcess())
+    {
+        RETAIL_LOG2((LF2_R2RLOAD, LL_INFO10, "Ready to Run disabled - compilation process.\n"));
         return NULL;
+    }
 #endif
 
 #ifndef CROSSGEN_COMPILE
     // The file must have been loaded using LoadLibrary
     if (!pLayout->IsRelocated())
+    {
+        RETAIL_LOG2((LF2_R2RLOAD, LL_WARNING, "Ready to Run disabled - module not loaded for execution: \"%s\".\n", pFile->GetSimpleName()));
         return NULL;
+    }
 #endif
 
     READYTORUN_HEADER * pHeader = pLayout->GetReadyToRunHeader();
 
     // Ignore the content if the image major version is higher than the major version currently supported by the runtime
     if (pHeader->MajorVersion > READYTORUN_MAJOR_VERSION)
+    {
+        RETAIL_LOG2((LF2_R2RLOAD, LL_WARNING, "Ready to Run disabled - unsupported header version %hu.%hu: \"%s\".\n", pHeader->MajorVersion, pHeader->MinorVersion, pFile->GetSimpleName()));
         return NULL;
+    }
 
     LoaderHeap *pHeap = pModule->GetLoaderAllocator()->GetHighFrequencyHeap();
     void * pMemory = pamTracker->Track(pHeap->AllocMem((S_SIZE_T)sizeof(ReadyToRunInfo)));
+
+    RETAIL_LOG2((LF2_R2RLOAD, LL_INFO10, "Ready to Run initialized successfully: \"%s\".\n", pFile->GetSimpleName()));
 
     return new (pMemory) ReadyToRunInfo(pModule, pLayout, pHeader);
 }
