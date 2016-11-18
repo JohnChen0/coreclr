@@ -21,6 +21,64 @@
 #define IRetFrameLength IRETFRAME_SegSs+8
 #define IRetFrameLengthAligned 16*((IRetFrameLength+8)/16)
 
+LEAF_ENTRY FooBar, _TEXT
+    push_nonvol_reg rbp
+    alloc_stack (200)
+    mov rdi, rsp
+    mov qword ptr [rdi], 305419896
+    mov qword ptr [rdi+8], 0
+    vinsertf128 ymm0, ymm0, xmmword ptr [rdi], 1
+    mov qword ptr [rdi], 305419896
+    mov qword ptr [rdi+8], 1
+    vinsertf128 ymm1, ymm1, xmmword ptr [rdi], 1
+    mov qword ptr [rdi], 305419896
+    mov qword ptr [rdi+8], 2
+    vinsertf128 ymm2, ymm2, xmmword ptr [rdi], 1
+    mov qword ptr [rdi], 305419896
+    mov qword ptr [rdi+8], 3
+    vinsertf128 ymm3, ymm3, xmmword ptr [rdi], 1
+    mov qword ptr [rdi], 305419896
+    mov qword ptr [rdi+8], 4
+    vinsertf128 ymm4, ymm4, xmmword ptr [rdi], 1
+    mov qword ptr [rdi], 305419896
+    mov qword ptr [rdi+8], 5
+    vinsertf128 ymm5, ymm5, xmmword ptr [rdi], 1
+    mov qword ptr [rdi], 305419896
+    mov qword ptr [rdi+8], 6
+    vinsertf128 ymm6, ymm6, xmmword ptr [rdi], 1
+    mov qword ptr [rdi], 305419896
+    mov qword ptr [rdi+8], 7
+    vinsertf128 ymm7, ymm7, xmmword ptr [rdi], 1
+    mov qword ptr [rdi], 305419896
+    mov qword ptr [rdi+8], 8
+    vinsertf128 ymm8, ymm8, xmmword ptr [rdi], 1
+    mov qword ptr [rdi], 305419896
+    mov qword ptr [rdi+8], 9
+    vinsertf128 ymm9, ymm9, xmmword ptr [rdi], 1
+    mov qword ptr [rdi], 305419896
+    mov qword ptr [rdi+8], 10
+    vinsertf128 ymm10, ymm10, xmmword ptr [rdi], 1
+    mov qword ptr [rdi], 305419896
+    mov qword ptr [rdi+8], 11
+    vinsertf128 ymm11, ymm11, xmmword ptr [rdi], 1
+    mov qword ptr [rdi], 305419896
+    mov qword ptr [rdi+8], 12
+    vinsertf128 ymm12, ymm12, xmmword ptr [rdi], 1
+    mov qword ptr [rdi], 305419896
+    mov qword ptr [rdi+8], 13
+    vinsertf128 ymm13, ymm13, xmmword ptr [rdi], 1
+    mov qword ptr [rdi], 305419896
+    mov qword ptr [rdi+8], 14
+    vinsertf128 ymm14, ymm14, xmmword ptr [rdi], 1
+    mov qword ptr [rdi], 305419896
+    mov qword ptr [rdi+8], 15
+    vinsertf128 ymm15, ymm15, xmmword ptr [rdi], 1
+
+    free_stack (200)
+    pop_nonvol_reg rbp
+    ret
+LEAF_END FooBar, _TEXT
+
 // Incoming:
 //  RDI: Context*
 //
@@ -104,6 +162,7 @@ LEAF_END RtlCaptureContext, _TEXT
 LEAF_ENTRY RtlRestoreContext, _TEXT
     push_nonvol_reg rbp
     alloc_stack (IRetFrameLengthAligned)
+
     
     test    BYTE PTR [rdi + CONTEXT_ContextFlags], CONTEXT_DEBUG_REGISTERS
     je      LOCAL_LABEL(Done_Restore_CONTEXT_DEBUG_REGISTERS)
